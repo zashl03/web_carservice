@@ -23,18 +23,24 @@
                 <span asp-validation-for="Input.FullName" class="text-danger"></span>
             </div>
             <div class="form-floating mb-3">
-                <input asp-for="Input.PhoneNumber" class="form-control" autocomplete="name" aria-required="true" placeholder="Ваш номер телефона" />
+                <input asp-for="Input.PhoneNumber" class="form-control" id="phoneInput" placeholder="+7 (___) ___-__-__" autocomplete="tel" aria-required="true" />
                 <label asp-for="Input.PhoneNumber">Номер телефона</label>
                 <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
             </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.Password">Password</label>
+            <div class="form-floating mb-3 position-relative">
+                <input asp-for="Input.Password" type="password" class="form-control pe-5" id="passwordInput" placeholder="Пароль" autocomplete="new-password" aria-required="true" />
+                <label asp-for="Input.Password">Пароль</label>
+                <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2 toggle-password" data-target="passwordInput" tabindex="-1">
+                    👁️
+                </button>
                 <span asp-validation-for="Input.Password" class="text-danger"></span>
             </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.ConfirmPassword">Confirm Password</label>
+            <div class="form-floating mb-3 position-relative">
+                <input asp-for="Input.ConfirmPassword" type="password" class="form-control pe-5" id="confirmPasswordInput" placeholder="Подтвердите пароль" autocomplete="new-password" aria-required="true" />
+                <label asp-for="Input.ConfirmPassword">Подтвердите пароль</label>
+                <button type="button" class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2 toggle-password" data-target="confirmPasswordInput" tabindex="-1">
+                    👁️
+                 </button>
                 <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
             </div>
             <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
@@ -74,4 +80,22 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#phoneInput').inputmask("+7 (999) 999-99-99");
+        });
+    </script>
+    <script>
+        document.querySelectorAll(".toggle-password").forEach(button => {
+            button.addEventListener("click", function () {
+                const targetId = this.getAttribute("data-target");
+                const input = document.getElementById(targetId);
+                const isPassword = input.type === "password";
+                input.type = isPassword ? "text" : "password";
+                this.textContent = isPassword ? "🙈" : "👁️";
+            });
+        });
+    </script>
 }

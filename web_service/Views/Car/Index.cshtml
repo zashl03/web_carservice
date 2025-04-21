@@ -1,0 +1,15 @@
+﻿@model IEnumerable<web_service.Models.Car.CarViewModel>
+
+<h2>Мои автомобили</h2>
+<a asp-action="Add">Добавить автомобиль</a>
+<table>
+    <tr><th>Марка</th><th>Модель</th><th>VIN</th></tr>
+    @foreach (var c in Model)
+    {
+        <tr>
+            <td>@c.Brand</td>
+            <td>@c.Model</td>
+            <td>@c.VIN</td>
+        </tr>
+    }
+</table>

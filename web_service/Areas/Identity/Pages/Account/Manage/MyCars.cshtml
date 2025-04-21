@@ -1,0 +1,68 @@
+﻿@page 
+@model web_service.Areas.Identity.Pages.Account.Manage.MyCarsModel
+@using Microsoft.AspNetCore.Mvc.RazorPages
+@using web_service.Models.Car
+@using Microsoft.AspNetCore.Identity
+@using web_service.Data.Identity;
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    ViewData["Title"] = "My Cars";
+    ViewData["ActivePage"] = ManageNavPages.Cars;
+}
+
+<h4>@ViewData["Title"]</h4>
+
+<!-- Список автомобилей -->
+<div class="mb-4">
+    @if (Model.Cars.Any())
+    {
+        <div class="row">
+            @foreach (var car in Model.Cars)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">@car.Brand @car.Model</h5>
+                            <p class="card-text">VIN: @car.VIN</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">No cars found</div>
+    }
+</div>
+
+<!-- Форма добавления -->
+<div class="card">
+    <div class="card-header">Add New Car</div>
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            <div class="form-group">
+                <label asp-for="Input.Brand" class="control-label"></label>
+                <input asp-for="Input.Brand" class="form-control" />
+                <span asp-validation-for="Input.Brand" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Input.Model" class="control-label"></label>
+                <input asp-for="Input.Model" class="form-control" />
+                <span asp-validation-for="Input.Model" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Input.VIN" class="control-label"></label>
+                <input asp-for="Input.VIN" class="form-control" />
+                <span asp-validation-for="Input.VIN" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">Add Car</button>
+        </form>
+    </div>
+</div>

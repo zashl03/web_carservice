@@ -1,0 +1,26 @@
+﻿@model web_service.Models.Car.AddCarViewModel
+
+<h2>Добавить автомобиль</h2>
+<form asp-action="Add" method="post">
+    <div>
+        <label asp-for="Brand"></label>
+        <input asp-for="Brand" />
+        <span asp-validation-for="Brand"></span>
+    </div>
+    <div>
+        <label asp-for="Model"></label>
+        <input asp-for="Model" />
+        <span asp-validation-for="Model"></span>
+    </div>
+    <div>
+        <label asp-for="VIN"></label>
+        <input asp-for="VIN" />
+        <span asp-validation-for="VIN"></span>
+    </div>
+    <button type="submit">Сохранить</button>
+</form>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

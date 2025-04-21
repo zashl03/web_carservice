@@ -10,7 +10,6 @@ namespace web_service.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options) { }
 
-        // профили и доменные таблицы
         public DbSet<ClientProfile> ClientProfiles { get; set; }
         public DbSet<EmployeeProfile> EmployeeProfiles { get; set; }
         public DbSet<CarEntity> Cars { get; set; }
@@ -19,25 +18,34 @@ namespace web_service.Data
         {
             base.OnModelCreating(builder);
 
-            // свяжем профили через ключ UserId
-            builder.Entity<ClientProfile>()
-                   .HasKey(cp => cp.UserId);
-            builder.Entity<ClientProfile>()
-                   .HasOne(cp => cp.User)
-                   .WithOne(u => u.ClientProfile)
-                   .HasForeignKey<ClientProfile>(cp => cp.UserId);
+            // ClientProfile
+            builder.Entity<ClientProfile>(entity =>
+            {
+                entity.HasKey(c => c.UserId);
+                entity.HasOne(c => c.User)
+                      .WithOne(u => u.ClientProfile)
+                      .HasForeignKey<ClientProfile>(c => c.UserId);
 
-            builder.Entity<EmployeeProfile>()
-                   .HasKey(ep => ep.UserId);
-            builder.Entity<EmployeeProfile>()
-                   .HasOne(ep => ep.User)
-                   .WithOne(u => u.EmployeeProfile)
-                   .HasForeignKey<EmployeeProfile>(ep => ep.UserId);
+                entity.HasMany(c => c.Cars)
+                      .WithOne(c => c.Client)
+                      .HasForeignKey(c => c.ClientProfileId)
+                      .OnDelete(DeleteBehavior.Cascade);  // Удаляем авто при удалении профиля
+            });
 
-            // у машины VIN должен быть уникальным
-            builder.Entity<CarEntity>()
-                   .HasIndex(c => c.VIN)
-                   .IsUnique();
+            // EmployeeProfile
+            builder.Entity<EmployeeProfile>(entity =>
+            {
+                entity.HasKey(e => e.UserId);
+                entity.HasOne(e => e.User)
+                      .WithOne(u => u.EmployeeProfile)
+                      .HasForeignKey<EmployeeProfile>(e => e.UserId);
+            });
+
+            // CarEntity
+            builder.Entity<CarEntity>(entity =>
+            {
+                entity.HasIndex(c => c.VIN).IsUnique();
+            });
         }
     }
 }

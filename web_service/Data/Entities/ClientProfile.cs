@@ -1,14 +1,14 @@
-﻿using web_service.Data.Identity;
+﻿using System.Collections.Generic;
+using web_service.Data.Identity;
 
 namespace web_service.Data.Entities
 {
     public class ClientProfile
     {
-        public string UserId { get; set; }
+        public string UserId { get; set; }  // Внешний ключ для ApplicationUser
         public ApplicationUser User { get; set; }
 
-        // здесь только дополнительные данные клиента
-        public string PreferredService { get; set; }
+        // Коллекция автомобилей клиента
+        public ICollection<CarEntity> Cars { get; set; } = new List<CarEntity>();
     }
-
 }

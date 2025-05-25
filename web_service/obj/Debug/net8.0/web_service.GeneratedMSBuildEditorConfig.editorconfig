@@ -42,8 +42,36 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcQWNjb3VudFxMb2dvdXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Areas/Identity/Pages/Account/Manage/CategoryPart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcQWNjb3VudFxNYW5hZ2VcQ2F0ZWdvcnlQYXJ0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Areas/Identity/Pages/Account/Manage/Employees.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcQWNjb3VudFxNYW5hZ2VcRW1wbG95ZWVzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Areas/Identity/Pages/Account/Manage/MyCars.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcQWNjb3VudFxNYW5hZ2VcTXlDYXJzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Areas/Identity/Pages/Account/Manage/PartInStorage.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcQWNjb3VudFxNYW5hZ2VcUGFydEluU3RvcmFnZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Areas/Identity/Pages/Account/Manage/Parts.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcQWNjb3VudFxNYW5hZ2VcUGFydHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Areas/Identity/Pages/Account/Manage/Record.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcQWNjb3VudFxNYW5hZ2VcUmVjb3JkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Areas/Identity/Pages/Account/Manage/StorageLocation.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcQWNjb3VudFxNYW5hZ2VcU3RvcmFnZUxvY2F0aW9uLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Areas/Identity/Pages/Account/Manage/_CategoryItem.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcSWRlbnRpdHlcUGFnZXNcQWNjb3VudFxNYW5hZ2VcX0NhdGVnb3J5SXRlbS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Areas/Identity/Pages/Account/Manage/_ManageNav.cshtml]
@@ -88,6 +116,14 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Views/Home/Privacy.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Views/Record/Add.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVjb3JkXEFkZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Views/Record/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVjb3JkXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Артём/Documents/GitHub/web_carservice/web_service/Views/Shared/Error.cshtml]

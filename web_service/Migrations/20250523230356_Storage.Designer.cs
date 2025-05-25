@@ -12,8 +12,8 @@ using web_service.Data;
 namespace web_service.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250421134356_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250523230356_Storage")]
+    partial class Storage
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -104,10 +104,12 @@ namespace web_service.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("ProviderKey")
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("text");
@@ -144,10 +146,12 @@ namespace web_service.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("Value")
                         .HasColumnType("text");
@@ -165,23 +169,26 @@ namespace web_service.Migrations
 
                     b.Property<string>("Brand")
                         .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ClientProfileId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Model")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("VIN")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(17)
+                        .HasColumnType("character varying(17)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ClientProfileId");
 
                     b.HasIndex("VIN")
                         .IsUnique();
@@ -192,10 +199,6 @@ namespace web_service.Migrations
             modelBuilder.Entity("web_service.Data.Entities.ClientProfile", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PreferredService")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("UserId");
@@ -209,7 +212,6 @@ namespace web_service.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Department")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("TabNumber")
@@ -219,6 +221,176 @@ namespace web_service.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("EmployeeProfiles");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.PartEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Manufacturer")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ManufacturerPn")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("OEMNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PartName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("ServicePn")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Parts");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.PartInStorageEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MeasureUnit")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("PartId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("StorageLocationId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StorageLocationId");
+
+                    b.HasIndex("PartId", "StorageLocationId")
+                        .IsUnique();
+
+                    b.ToTable("PartInStorages");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.RecordEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("BookingDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CarId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarId");
+
+                    b.ToTable("Records");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.StorageLocationEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Cell")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NumberPlace")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Rack")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Room")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Shelf")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StorekeeperId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Zone")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NumberPlace")
+                        .IsUnique();
+
+                    b.HasIndex("StorekeeperId");
+
+                    b.ToTable("StorageLocations");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.WarehouseEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("StorekeeperId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StorekeeperId")
+                        .IsUnique();
+
+                    b.ToTable("Warehouses");
                 });
 
             modelBuilder.Entity("web_service.Data.Identity.ApplicationUser", b =>
@@ -262,7 +434,6 @@ namespace web_service.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("PhoneNumberConfirmed")
@@ -343,13 +514,13 @@ namespace web_service.Migrations
 
             modelBuilder.Entity("web_service.Data.Entities.CarEntity", b =>
                 {
-                    b.HasOne("web_service.Data.Identity.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
+                    b.HasOne("web_service.Data.Entities.ClientProfile", "Client")
+                        .WithMany("Cars")
+                        .HasForeignKey("ClientProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("Client");
                 });
 
             modelBuilder.Entity("web_service.Data.Entities.ClientProfile", b =>
@@ -372,6 +543,63 @@ namespace web_service.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.PartInStorageEntity", b =>
+                {
+                    b.HasOne("web_service.Data.Entities.PartEntity", "Part")
+                        .WithMany()
+                        .HasForeignKey("PartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("web_service.Data.Entities.StorageLocationEntity", "StorageLocation")
+                        .WithMany()
+                        .HasForeignKey("StorageLocationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Part");
+
+                    b.Navigation("StorageLocation");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.RecordEntity", b =>
+                {
+                    b.HasOne("web_service.Data.Entities.CarEntity", "Car")
+                        .WithMany()
+                        .HasForeignKey("CarId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Car");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.StorageLocationEntity", b =>
+                {
+                    b.HasOne("web_service.Data.Entities.EmployeeProfile", "Storekeeper")
+                        .WithMany()
+                        .HasForeignKey("StorekeeperId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Storekeeper");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.WarehouseEntity", b =>
+                {
+                    b.HasOne("web_service.Data.Entities.EmployeeProfile", "Storekeeper")
+                        .WithOne()
+                        .HasForeignKey("web_service.Data.Entities.WarehouseEntity", "StorekeeperId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Storekeeper");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.ClientProfile", b =>
+                {
+                    b.Navigation("Cars");
                 });
 
             modelBuilder.Entity("web_service.Data.Identity.ApplicationUser", b =>

@@ -1,0 +1,87 @@
+﻿@page
+@model web_service.Areas.Identity.Pages.Account.Manage.EmployeesModel
+@using web_service.Models.Admin
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    ViewData["Title"] = "Сотрудники";
+    ViewData["ActivePage"] = ManageNavPages.Employees;
+}
+
+<h4>@ViewData["Title"]</h4>
+
+<!-- Форма добавления нового сотрудника -->
+<div class="card mb-4">
+    <div class="card-header">Добавить сотрудника</div>
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="Input.Email"></label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mt-3">
+                <label asp-for="Input.Password"></label>
+                <input asp-for="Input.Password" class="form-control" type="password" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mt-3">
+                <label asp-for="Input.Role"></label>
+                <select asp-for="Input.Role" asp-items="Model.RoleSelectList" class="form-control"></select>
+                <span asp-validation-for="Input.Role" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mt-3">
+                <label asp-for="Input.TabNumber"></label>
+                <input asp-for="Input.TabNumber" class="form-control" />
+                <span asp-validation-for="Input.TabNumber" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mt-3">
+                <label asp-for="Input.Department"></label>
+                <input asp-for="Input.Department" class="form-control" />
+                <span asp-validation-for="Input.Department" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">Создать</button>
+        </form>
+    </div>
+</div>
+
+<!-- Существующие сотрудники -->
+@if (!Model.Employees.Any())
+{
+    <div class="alert alert-info">Сотрудники не найдены.</div>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Роли</th>
+                <th>Таб. №</th>
+                <th>Отдел</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in Model.Employees)
+            {
+                <tr>
+                    <td>@e.Email</td>
+                    <td>@string.Join(", ", e.Roles)</td>
+                    <td>@e.TabNumber</td>
+                    <td>@e.Department</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

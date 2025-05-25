@@ -1,0 +1,81 @@
+﻿@page
+@model web_service.Areas.Identity.Pages.Account.Manage.WarehousesModel
+@{
+    ViewData["Title"] = "Склады и запчасти";
+    ViewData["ActivePage"] = ManageNavPages.Warehouses;
+}
+
+<h4>@ViewData["Title"]</h4>
+
+<h4>Создать новый склад</h4>
+<form method="post" asp-page-handler="AddWarehouse">
+    <div class="form-group">
+        <label asp-for="NewWarehouse.Address"></label>
+        <input asp-for="NewWarehouse.Address" class="form-control" />
+        <span asp-validation-for="NewWarehouse.Address" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="NewWarehouse.StorekeeperId"></label>
+        <select asp-for="NewWarehouse.StorekeeperId"
+                asp-items="Model.ViewModel.StorekeeperOptions"
+                class="form-control">
+            <option value="">Выберите кладовщика</option>
+        </select>
+        <span asp-validation-for="NewWarehouse.StorekeeperId" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Добавить склад</button>
+</form>
+<hr />
+
+<form method="post">
+    <div class="form-group">
+        <label asp-for="ViewModel.SelectedWarehouseId">Выберите склад</label>
+        <select asp-for="ViewModel.SelectedWarehouseId" asp-items="Model.ViewModel.WarehouseOptions" class="form-control"></select>
+    </div>
+    <button type="submit" class="btn btn-primary">Показать запчасти</button>
+</form>
+
+@if (Model.ViewModel.Parts != null && Model.ViewModel.Parts.Any())
+{
+    <h5 class="mt-4">Запчасти склада</h5>
+    <table class="table">
+        <thead><tr><th>Название</th><th>Партномер</th><th>Кол-во</th><th>Стоимость</th></tr></thead>
+        <tbody>
+            @foreach (var p in Model.ViewModel.Parts)
+            {
+                <tr>
+                    <td>@p.Name</td>
+                    <td>@p.PartNumber</td>
+                    <td>@p.Quantity</td>
+                    <td>@p.Cost</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <hr />
+
+    <h5>Добавить новую запчасть</h5>
+    <form method="post" asp-page-handler="AddPart">
+        <div class="form-group">
+            <label asp-for="NewPart.Name"></label>
+            <input asp-for="NewPart.Name" class="form-control" />
+            <span asp-validation-for="NewPart.Name" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="NewPart.PartNumber"></label>
+            <input asp-for="NewPart.PartNumber" class="form-control" />
+            <span asp-validation-for="NewPart.PartNumber" class="text-danger"></span>
+        </div>
+    </form>
+}
+else
+{
+    <p>Запчастей не найдено.</p>
+}
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

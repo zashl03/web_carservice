@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using web_service.Data;
 using web_service.Data.Identity;
 using AutoMapper;
+using web_service.Services;
+using web_service.Mappings;
 
 var builder = WebApplication.CreateBuilder(args); // Создание билдера приложения
 
@@ -48,11 +50,15 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeAreaFolder("Identity", "/Account/Manage");
     // Пример: Требовать роль Admin для всей области
     // options.Conventions.AuthorizeAreaFolder("Admin", "/", "Administrator");
+    // Защита всей папки Pages в области Admin
+    options.Conventions.AuthorizeAreaFolder("Admin", "/", "Administrator");
 });
 
 // 1.4 Регистрация кастомных сервисов
 builder.Services.AddAutoMapper(typeof(DomainToEntityProfile).Assembly); // AutoMapper
 builder.Services.AddScoped<ICarService, CarService>(); // Сервис работы с автомобилями
+builder.Services.AddScoped<IRecordService, RecordService>();
+//builder.Services.AddScoped<IWarehouseService, WarehouseService>();
 
 /***************************
  * РАЗДЕЛ 2: ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ
@@ -63,7 +69,9 @@ var app = builder.Build(); // Сборка приложения
 using (var scope = app.Services.CreateScope()) // Создание временного scope
 {
     var roleMgr = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    string[] roles = { "Client", "Storekeeper", "Administrator" }; // Основные роли системы
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    string[] roles = { "Client", "Storekeeper", "Administrator", "Mechanic" }; // Основные роли системы
 
     foreach (var role in roles)
     {
@@ -71,6 +79,37 @@ using (var scope = app.Services.CreateScope()) // Создание времен�
         {
             await roleMgr.CreateAsync(new IdentityRole(role)); // Создание отсутствующей роли
             Console.WriteLine($"Created role: {role}");
+        }
+    }
+   
+    var adminEmail = config["AdminUser:Email"];
+    var adminPass = config["AdminUser:Password"];
+
+    if (!string.IsNullOrWhiteSpace(adminEmail))
+    {
+        var existingAdmin = await userMgr.FindByEmailAsync(adminEmail);
+        if (existingAdmin == null)
+        {
+            var admin = new ApplicationUser { UserName = adminEmail, Email = adminEmail, FullName = "Administrator", PhoneNumber = "Empty"};
+            var createResult = await userMgr.CreateAsync(admin, adminPass);
+            if (createResult.Succeeded)
+            {
+                await userMgr.AddToRoleAsync(admin, "Administrator");
+                var code = await userMgr.GenerateEmailConfirmationTokenAsync(admin);
+                await userMgr.ConfirmEmailAsync(admin, code);
+                Console.WriteLine($"Seeded default admin: {adminEmail}");
+            }
+            else
+            {
+                Console.WriteLine($"Failed to seed admin: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+            }
+        }
+        else if (!existingAdmin.EmailConfirmed)
+        {
+            // Если админ уже есть, но e-mail не подтверждён — подтверждаем
+            var token = await userMgr.GenerateEmailConfirmationTokenAsync(existingAdmin);
+            await userMgr.ConfirmEmailAsync(existingAdmin, token);
+            Console.WriteLine($"[Seed] Admin email confirmed: {adminEmail}");
         }
     }
 }
@@ -103,6 +142,9 @@ app.UseAuthentication(); // Проверка аутентификации
 app.UseAuthorization();  // Проверка прав доступа
 
 // 3.4 Настройка конечных точек
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 app.MapControllerRoute( // Маршрутизация для MVC
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}"); // /Home/Index/5

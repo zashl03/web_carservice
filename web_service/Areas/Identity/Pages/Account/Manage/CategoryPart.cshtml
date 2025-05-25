@@ -1,0 +1,89 @@
+﻿@page
+@model web_service.Areas.Identity.Pages.Account.Manage.CategoryPartModel
+@using web_service.Models.Admin
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = "Управление категориями запчастей";
+}
+
+<div class="container">
+    <h2>@ViewData["Title"]</h2>
+
+    <button class="btn btn-primary mb-3"
+            data-bs-toggle="modal"
+            data-bs-target="#editModal"
+            onclick="prepareModal('', '')">
+        <i class="fas fa-plus"></i> Добавить корневую категорию
+    </button>
+
+    <ul class="list-group">
+        @foreach (var cat in Model.Categories.Where(c => c.ParentId == null))
+        {
+            @Html.Partial("_CategoryItem", new CategoryItemViewModel { Category = cat, Level = 0 })
+        }
+    </ul>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page="./CategoryPart" id="editForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактировать категорию</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" asp-for="Input.Id" />
+                    <input type="hidden" asp-for="Input.ParentId" id="ParentId" />
+
+                    <div class="mb-3">
+                        <label asp-for="Input.CategoryName" class="form-label"></label>
+                        <input asp-for="Input.CategoryName" class="form-control" />
+                        <span asp-validation-for="Input.CategoryName" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.ShortName" class="form-label"></label>
+                        <input asp-for="Input.ShortName" class="form-control" />
+                        <span asp-validation-for="Input.ShortName" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Отмена
+                    </button>
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function prepareModal(id, parentId) {
+            var form = $('#editForm')[0];
+            form.reset();
+
+            // GUID.Empty для корректного биндинга
+            var emptyGuid = '00000000-0000-0000-0000-000000000000';
+            $('#Input_Id').val(id || emptyGuid);
+            $('#ParentId').val(parentId || '');
+
+            // Переустановим заголовок
+            var title = id
+                ? 'Редактировать категорию'
+                : (parentId ? 'Добавить подкатегорию' : 'Добавить корневую категорию');
+            $('#editModal .modal-title').text(title);
+        }
+    </script>
+}

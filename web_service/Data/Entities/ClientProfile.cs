@@ -6,20 +6,22 @@
  * Хранит дополнительные данные, специфичные для клиентской роли пользователя.
  */
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using web_service.Data.Identity;
 
 namespace web_service.Data.Entities
 {
     public class ClientProfile
     {
-        public string UserId { get; set; }  // Внешний ключ для связи с ApplicationUser (формат: GUID или строковый ID)
+        [Key]
+        [ForeignKey(nameof(User))]
+        public string UserId { get; set; } = null!;
 
-        // Навигационное свойство для доступа к данным пользователя
-        // Загружается через .Include() в EF Core (например: _db.ClientProfiles.Include(c => c.User))
-        public ApplicationUser User { get; set; }
+        // Навигационное свойство к ApplicationUser
+        public ApplicationUser User { get; set; } = null!;
 
         // Коллекция автомобилей клиента (отношение 1 ко многим)
-        // Инициализация предотвращает NullReferenceException при добавлении авто новому клиенту
-        public ICollection<CarEntity> Cars { get; set; } = new List<CarEntity>(); // Пример: [CarEntity{Id=...}, ...]
+        public ICollection<CarEntity> Cars { get; set; } = new List<CarEntity>();
     }
 }

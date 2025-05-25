@@ -1,25 +1,125 @@
 ﻿@using web_service.Data.Identity
 @inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
 @{
     var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+    var user = await UserManager.GetUserAsync(User);
+    var isAdmin = user != null && await UserManager.IsInRoleAsync(user, "Administrator");
+    var isClient = user != null && await UserManager.IsInRoleAsync(user, "Client");
 }
-<ul class="nav nav-pills flex-column">
-    <li class="nav-item"><a class="nav-link @ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">Profile</a></li>
-    <li class="nav-item"><a class="nav-link @ManageNavPages.EmailNavClass(ViewContext)" id="email" asp-page="./Email">Email</a></li>
-    <li class="nav-item"><a class="nav-link @ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">Password</a></li>
 
-    <!-- Исправленный пункт меню -->
+<ul class="nav nav-pills flex-column">
     <li class="nav-item">
-        <a class="nav-link @ManageNavPages.CarsNavClass(ViewContext)"
-           id="cars"
+        <a class="nav-link @ManageNavPages.IndexNavClass(ViewContext)"
            asp-area="Identity"
-           asp-page="./MyCars">My Cars</a>
+           asp-page="/Account/Manage/Index">
+            Profile
+        </a>
     </li>
- 
+    <li class="nav-item">
+        <a class="nav-link @ManageNavPages.EmailNavClass(ViewContext)"
+           asp-area="Identity"
+           asp-page="/Account/Manage/Email">
+            Email
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @ManageNavPages.ChangePasswordNavClass(ViewContext)"
+           asp-area="Identity"
+           asp-page="/Account/Manage/ChangePassword">
+            Password
+        </a>
+    </li>
+    @if (isClient)
+    {
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.CarsNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/MyCars">
+                My Cars
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.RecordNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/Record">
+                Record
+            </a>
+        </li>
+    }
+    <!-- _ManageNav.cshtml -->
+    @if (isAdmin)
+    {
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.EmployeesNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/Employees">
+                Сотрудники
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.WarehousesNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/Warehouses">
+                Склады и запчасти
+            </a>
+        </li>
+    }
+    <li class="nav-item">
+        <a class="nav-link @ManageNavPages.StorageLocationNavClass(ViewContext)"
+           asp-area="Identity"
+           asp-page="/Account/Manage/StorageLocation">
+            Места хранения
+        </a>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link @ManageNavPages.CategoryPartNavClass(ViewContext)"
+           asp-area="Identity"
+           asp-page="/Account/Manage/CategoryPart">
+            Категории запчастей
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @ManageNavPages.PartsNavClass(ViewContext)"
+           asp-area="Identity"
+           asp-page="/Account/Manage/Parts">
+            Управление запчастями
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @ManageNavPages.PartInStorageNavClass(ViewContext)"
+           asp-area="Identity"
+           asp-page="/Account/Manage/PartInStorage">
+            Запчасти в хранении
+        </a>
+    </li>
+
     @if (hasExternalLogins)
     {
-        <li id="external-logins" class="nav-item"><a id="external-login" class="nav-link @ManageNavPages.ExternalLoginsNavClass(ViewContext)" asp-page="./ExternalLogins">External logins</a></li>
+        <li id="external-logins" class="nav-item">
+            <a class="nav-link @ManageNavPages.ExternalLoginsNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/ExternalLogins">
+                External logins
+            </a>
+        </li>
     }
-    <li class="nav-item"><a class="nav-link @ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext)" id="two-factor" asp-page="./TwoFactorAuthentication">Two-factor authentication</a></li>
-    <li class="nav-item"><a class="nav-link @ManageNavPages.PersonalDataNavClass(ViewContext)" id="personal-data" asp-page="./PersonalData">Personal data</a></li>
+    <li class="nav-item">
+        <a class="nav-link @ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext)"
+           asp-area="Identity"
+           asp-page="/Account/Manage/TwoFactorAuthentication">
+            Two-factor authentication
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @ManageNavPages.PersonalDataNavClass(ViewContext)"
+           asp-area="Identity"
+           asp-page="/Account/Manage/PersonalData">
+            Personal data
+        </a>
+    </li>
 </ul>

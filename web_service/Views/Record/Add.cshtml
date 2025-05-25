@@ -1,0 +1,27 @@
+﻿@model web_service.Models.Record.AddRecordViewModel
+
+<h2>Записаться на обслуживание</h2>
+<form asp-action="Add" method="post">
+    <div>
+        <label asp-for="SelectedCarId"></label>
+        <select asp-for="SelectedCarId" asp-items="Model.Cars"></select>
+        <span asp-validation-for="SelectedCarId" class="text-danger"></span>
+    </div>
+    <div>
+        <label asp-for="BookingDate"></label>
+        <input asp-for="BookingDate" type="datetime-local" />
+        <span asp-validation-for="BookingDate" class="text-danger"></span>
+    </div>
+    <div>
+        <label asp-for="Comment"></label>
+        <textarea asp-for="Comment"></textarea>
+        <span asp-validation-for="Comment" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Записаться</button>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

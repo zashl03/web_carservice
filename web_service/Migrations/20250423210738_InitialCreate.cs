@@ -98,8 +98,8 @@ namespace web_service.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "text", nullable: false),
-                    ProviderKey = table.Column<string>(type: "text", nullable: false),
+                    LoginProvider = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    ProviderKey = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "text", nullable: true),
                     UserId = table.Column<string>(type: "text", nullable: false)
                 },
@@ -143,8 +143,8 @@ namespace web_service.Migrations
                 columns: table => new
                 {
                     UserId = table.Column<string>(type: "text", nullable: false),
-                    LoginProvider = table.Column<string>(type: "text", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    LoginProvider = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     Value = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
@@ -159,32 +159,10 @@ namespace web_service.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Cars",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Brand = table.Column<string>(type: "text", nullable: false),
-                    Model = table.Column<string>(type: "text", nullable: false),
-                    VIN = table.Column<string>(type: "text", nullable: false),
-                    UserId = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Cars", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Cars_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ClientProfiles",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    PreferredService = table.Column<string>(type: "text", nullable: false)
+                    UserId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -203,7 +181,7 @@ namespace web_service.Migrations
                 {
                     UserId = table.Column<string>(type: "text", nullable: false),
                     TabNumber = table.Column<string>(type: "text", nullable: false),
-                    Department = table.Column<string>(type: "text", nullable: false)
+                    Department = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -214,6 +192,47 @@ namespace web_service.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Cars",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Brand = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Model = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    VIN = table.Column<string>(type: "character varying(17)", maxLength: 17, nullable: false),
+                    ClientProfileId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Cars", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Cars_ClientProfiles_ClientProfileId",
+                        column: x => x.ClientProfileId,
+                        principalTable: "ClientProfiles",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Records",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CarId = table.Column<Guid>(type: "uuid", nullable: false),
+                    BookingDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Comment = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Records", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Records_Cars_CarId",
+                        column: x => x.CarId,
+                        principalTable: "Cars",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
@@ -254,15 +273,20 @@ namespace web_service.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Cars_UserId",
+                name: "IX_Cars_ClientProfileId",
                 table: "Cars",
-                column: "UserId");
+                column: "ClientProfileId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Cars_VIN",
                 table: "Cars",
                 column: "VIN",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Records_CarId",
+                table: "Records",
+                column: "CarId");
         }
 
         /// <inheritdoc />
@@ -284,16 +308,19 @@ namespace web_service.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "EmployeeProfiles");
+
+            migrationBuilder.DropTable(
+                name: "Records");
+
+            migrationBuilder.DropTable(
+                name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
                 name: "Cars");
 
             migrationBuilder.DropTable(
                 name: "ClientProfiles");
-
-            migrationBuilder.DropTable(
-                name: "EmployeeProfiles");
-
-            migrationBuilder.DropTable(
-                name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

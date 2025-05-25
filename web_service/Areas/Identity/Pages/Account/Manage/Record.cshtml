@@ -1,0 +1,76 @@
+﻿@page
+@model web_service.Areas.Identity.Pages.Account.Manage.RecordModel
+@using Microsoft.AspNetCore.Mvc.RazorPages
+@using web_service.Models.Record
+@using Microsoft.AspNetCore.Identity
+@using web_service.Data.Identity
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    ViewData["Title"] = "Запись на обслуживание";
+    ViewData["ActivePage"] = ManageNavPages.Record;
+}
+
+<h4>@ViewData["Title"]</h4>
+
+<!-- Список существующих записей -->
+<div class="mb-4">
+    @if (Model.Records.Any())
+    {
+        <div class="row">
+            @foreach (var rec in Model.Records)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">@rec.CarDisplay</h5>
+                            <p class="card-text"><strong>Дата:</strong> @rec.BookingDate.ToString("dd.MM.yyyy")</p>
+                            @if (!string.IsNullOrEmpty(rec.Comment))
+                            {
+                                <p class="card-text"><strong>Комментарий:</strong> @rec.Comment</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">Записей на обслуживание не найдено.</div>
+    }
+</div>
+
+<!-- Форма добавления новой записи -->
+<div class="card">
+    <div class="card-header">Новая запись</div>
+    <div class="card-body">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="Input.SelectedCarId" class="control-label"></label>
+                <select asp-for="Input.SelectedCarId" asp-items="Model.Input.Cars" class="form-control"></select>
+                <span asp-validation-for="Input.SelectedCarId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mt-3">
+                <label asp-for="Input.BookingDate" class="control-label"></label>
+                <input asp-for="Input.BookingDate" class="form-control" type="date" />
+                <span asp-validation-for="Input.BookingDate" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mt-3">
+                <label asp-for="Input.Comment" class="control-label"></label>
+                <textarea asp-for="Input.Comment" class="form-control"></textarea>
+                <span asp-validation-for="Input.Comment" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">Записаться</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

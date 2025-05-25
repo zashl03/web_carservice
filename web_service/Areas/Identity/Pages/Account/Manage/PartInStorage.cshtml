@@ -1,0 +1,319 @@
+﻿@page
+@model web_service.Areas.Identity.Pages.Account.Manage.PartInStorageModel
+@{
+    ViewData["Title"] = "Запчасти в хранилище";
+}
+
+<h2>Запчасти в хранилище</h2>
+
+<!-- ====================================================
+     1. Форма для добавления новой записи (вверху)
+     ==================================================== -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Добавить запчасть в хранилище</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" asp-page-handler="Save" id="create-form">
+            <!-- Скрытое поле для самого GUID запчасти -->
+            <input type="hidden" asp-for="Input.Id" id="create-Id" />
+            <input type="hidden" asp-for="Input.PartId" id="create-PartId" />
+            <input type="hidden" asp-for="Input.StorageLocationId" id="create-StorageLocationId" />
+
+            <!-- Видимое текстовое поле + datalist для выбора запчасти по PartName -->
+            <div class="form-group mb-2">
+                <label for="create-PartName">Запчасть</label>
+                <input list="partsDatalist" id="create-PartName" class="form-control" placeholder="Начните вводить название запчасти" />
+                <datalist id="partsDatalist">
+                    @* Выводим human-readable текст (PartName), value у option - PartName *@
+                    @foreach (var part in Model.PartSelectList)
+                    {
+                        <option data-id="@part.Value" value="@part.Text"></option>
+                    }
+                </datalist>
+                <span asp-validation-for="Input.PartId" class="text-danger"></span>
+            </div>
+
+            <!-- Видимое текстовое поле + datalist для выбора места хранения по NumberPlace -->
+            <div class="form-group mb-2">
+                <label for="create-StoragePlace">Место хранения</label>
+                <input list="storageDatalist" id="create-StoragePlace" class="form-control" placeholder="Начните вводить номер места" />
+                <datalist id="storageDatalist">
+                    @foreach (var storage in Model.StorageSelectList)
+                    {
+                        <option data-id="@storage.Value" value="@storage.Text"></option>
+                    }
+                </datalist>
+                <span asp-validation-for="Input.StorageLocationId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Input.Quantity">Количество</label>
+                <input asp-for="Input.Quantity" type="number" class="form-control" />
+                <span asp-validation-for="Input.Quantity" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Input.MeasureUnit">Единица измерения</label>
+                <input asp-for="Input.MeasureUnit" class="form-control" />
+                <span asp-validation-for="Input.MeasureUnit" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-success">Добавить</button>
+        </form>
+    </div>
+</div>
+
+<hr />
+
+<!-- ====================================================
+     2. Таблица со всеми записями (ниже формы)
+     ==================================================== -->
+<div style="max-height:600px; overflow:auto;">
+    <table class="table table-striped" id="part-in-storage-table">
+        <thead>
+            <tr>
+                <th>Запчасть</th>
+                <th>ServicePn</th>
+                <th>Место хранения</th>
+                <th>Количество</th>
+                <th>Ед. измерения</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.PartInStorageList != null && Model.PartInStorageList.Count > 0)
+            {
+                foreach (var item in Model.PartInStorageList)
+                {
+                    <tr data-id="@item.Id">
+                        <td>@item.Part.PartName</td>
+                        <td>@item.Part.ServicePn</td>
+                        <td>@item.StorageLocation.NumberPlace</td>
+                        <td>@item.Quantity</td>
+                        <td>@item.MeasureUnit</td>
+                        <td>
+                            <!-- Кнопка открытия модального окна редактирования -->
+                            <button type="button"
+                                    class="btn btn-sm btn-primary btn-edit"
+                                    data-id="@item.Id">
+                                Редактировать
+                            </button>
+                            <form method="post" asp-page-handler="Delete" style="display:inline;">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Удалить эту запись?');">
+                                    Удалить
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center">Нет записей в хранилище.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<hr />
+
+<!-- ====================================================
+     3. Bootstrap-модальное окно для редактирования
+     ==================================================== -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать запись</h5>
+                @* Крестик убран *@
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-page-handler="Save" id="edit-form">
+                    <!-- Скрытые поля для ID, PartId и StorageLocationId -->
+                    <input type="hidden" asp-for="Input.Id" id="edit-Id" />
+                    <input type="hidden" asp-for="Input.PartId" id="edit-PartIdHidden" />
+                    <input type="hidden" asp-for="Input.StorageLocationId" id="edit-StorageLocationIdHidden" />
+
+                    <!-- Видимое поле для PartName + datalist -->
+                    <div class="form-group mb-2">
+                        <label for="edit-PartName">Запчасть</label>
+                        <input list="partsDatalistEdit" id="edit-PartName" class="form-control" />
+                        <datalist id="partsDatalistEdit">
+                            @foreach (var part in Model.PartSelectList)
+                            {
+                                <option data-id="@part.Value" value="@part.Text"></option>
+                            }
+                        </datalist>
+                        <span asp-validation-for="Input.PartId" class="text-danger"></span>
+                    </div>
+
+                    <!-- Видимое поле для NumberPlace + datalist -->
+                    <div class="form-group mb-2">
+                        <label for="edit-StoragePlace">Место хранения</label>
+                        <input list="storageDatalistEdit" id="edit-StoragePlace" class="form-control" />
+                        <datalist id="storageDatalistEdit">
+                            @foreach (var storage in Model.StorageSelectList)
+                            {
+                                <option data-id="@storage.Value" value="@storage.Text"></option>
+                            }
+                        </datalist>
+                        <span asp-validation-for="Input.StorageLocationId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.Quantity">Количество</label>
+                        <input asp-for="Input.Quantity" type="number" class="form-control" id="edit-Quantity" />
+                        <span asp-validation-for="Input.Quantity" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.MeasureUnit">Ед. измерения</label>
+                        <input asp-for="Input.MeasureUnit" class="form-control" id="edit-MeasureUnit" />
+                        <span asp-validation-for="Input.MeasureUnit" class="text-danger"></span>
+                    </div>
+
+                    <div class="modal-footer">
+                        <!-- Прямой вызов JS: скрыть модалку -->
+                        <button type="button" class="btn btn-secondary" onclick="$('#editModal').modal('hide')">
+                            Отмена
+                        </button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- jQuery (если в Layout не подключено, иначе уберите) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJ+Yy9N4/R+v6QEn6ztX4Sv5K2IdZh9f98tZU="
+            crossorigin="anonymous"></script>
+
+    <!-- Bootstrap 4 bundle (если в Layout не подключено, иначе уберите) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-Piv4xVNRyMGpqkYfYfTc+3laZN8exmNQhLo9I5M7uGQ5jOeLO0DnhbxtSi3H2dj"
+            crossorigin="anonymous"></script>
+
+    <script>
+        $(function () {
+            console.log("PartInStorage: document.ready");
+
+            // Построим JS-карты: PartName → GUID и NumberPlace → GUID
+            var partMap = {};
+            $('#partsDatalist option').each(function () {
+                var txt = $(this).val();
+                var id = $(this).data('id');
+                partMap[txt] = id;
+            });
+            // Для модального (может быть тот же datalist, но с другим id)
+            var partMapEdit = {};
+            $('#partsDatalistEdit option').each(function () {
+                var txt = $(this).val();
+                var id = $(this).data('id');
+                partMapEdit[txt] = id;
+            });
+
+            var storageMap = {};
+            $('#storageDatalist option').each(function () {
+                var txt = $(this).val();
+                var id = $(this).data('id');
+                storageMap[txt] = id;
+            });
+            var storageMapEdit = {};
+            $('#storageDatalistEdit option').each(function () {
+                var txt = $(this).val();
+                var id = $(this).data('id');
+                storageMapEdit[txt] = id;
+            });
+
+            // Когда в форме создания выбирают PartName из datalist:
+            $('#create-PartName').on('change', function () {
+                var txt = $(this).val();
+                var id = partMap[txt];
+                $('#create-PartId').val(id);
+            });
+
+            // Когда в форме создания выбирают StoragePlace из datalist:
+            $('#create-StoragePlace').on('change', function () {
+                var txt = $(this).val();
+                var id = storageMap[txt];
+                $('#create-StorageLocationId').val(id);
+            });
+
+            // Делегированное событие для кнопок "Редактировать"
+            $(document).on('click', '.btn-edit', function () {
+                var id = $(this).data('id');
+                console.log("Редактировать, id =", id);
+
+                var url = window.location.pathname.replace(/\/$/, "")
+                    + '?handler=PartInStorageDetails&id=' + id;
+                console.log("AJAX URL:", url);
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (data) {
+                        console.log("AJAX success:", data);
+                        if (data) {
+                            $('#edit-form input[name="Input.Id"]').val(data.id);
+
+                            // Заполняем название запчасти (поиск по GUID в карте обратной):
+                            var partNameToShow = "";
+                            $.each(partMapEdit, function (name, guid) {
+                                if (guid === data.partId) {
+                                    partNameToShow = name;
+                                    return false; // break
+                                }
+                            });
+                            $('#edit-PartName').val(partNameToShow);
+                            $('#edit-PartIdHidden').val(data.partId);
+
+                            // Аналогично для места хранения:
+                            var storageNameToShow = "";
+                            $.each(storageMapEdit, function (name, guid) {
+                                if (guid === data.storageLocationId) {
+                                    storageNameToShow = name;
+                                    return false;
+                                }
+                            });
+                            $('#edit-StoragePlace').val(storageNameToShow);
+                            $('#edit-StorageLocationIdHidden').val(data.storageLocationId);
+
+                            $('#edit-Quantity').val(data.quantity);
+                            $('#edit-MeasureUnit').val(data.measureUnit);
+
+                            $('#editModal').modal('show');
+                        } else {
+                            alert('Данные не найдены.');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("AJAX error:", status, error);
+                        alert('Ошибка при загрузке данных для редактирования.');
+                    }
+                });
+            });
+
+            // Когда пользователь изменяет PartName в модальном:
+            $('#edit-PartName').on('change', function () {
+                var txt = $(this).val();
+                var id = partMapEdit[txt];
+                $('#edit-PartIdHidden').val(id);
+            });
+
+            // Когда пользователь изменяет StoragePlace в модальном:
+            $('#edit-StoragePlace').on('change', function () {
+                var txt = $(this).val();
+                var id = storageMapEdit[txt];
+                $('#edit-StorageLocationIdHidden').val(id);
+            });
+        });
+    </script>
+}

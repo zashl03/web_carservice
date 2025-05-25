@@ -17,7 +17,7 @@ namespace web_service.Data.Identity
         public string FullName { get; set; }      // Пример: "Иванов Иван Иванович"
 
         // Переопределение номера телефона (базовое свойство уже есть в IdentityUser)
-        public new string PhoneNumber { get; set; } // Явное объявление для кастомизации
+        public new string? PhoneNumber { get; set; } // Явное объявление для кастомизации
 
         // Навигационное свойство для связи с профилем клиента (отношение 1-to-1)
         public ClientProfile ClientProfile { get; set; } // Заполняется, если пользователь - клиент

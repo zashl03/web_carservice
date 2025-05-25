@@ -1,25 +1,26 @@
 ﻿/*
  * Файл содержит Entity-модель профиля сотрудника для БД.
- * Реализует связь 1-to-1 с пользователем (Identity) и хранит 
- * дополнительные данные для работников компании (отдел, табельный номер).
- * Используется для разделения ролей в системе и управления правами доступа.
+ * Реализует связь 1-to-1 с пользователем (Identity) и хранит
+ * дополнительные данные для работников компании.
  */
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using web_service.Data.Identity;
 
 namespace web_service.Data.Entities
 {
     public class EmployeeProfile
     {
-        public string UserId { get; set; }      // Внешний ключ для связи с ApplicationUser (формат: "guid|string_id")
+        [Key]
+        [ForeignKey(nameof(User))]
+        public string UserId { get; set; } = null!;  // Первичный и внешний ключ на ApplicationUser
 
-        // Навигационное свойство для доступа к основным данным пользователя
-        // Пример использования: employee.User.Email
-        public ApplicationUser User { get; set; }
+        // Навигационное свойство к ApplicationUser
+        public ApplicationUser User { get; set; } = null!;
 
-        // Табельный номер сотрудника (уникальный идентификатор в системе компании)
-        public string TabNumber { get; set; }   // Формат: "Т-12345", обязателен для HR-систем
+        [Required]
+        public string TabNumber { get; set; } = null!; // Табельный номер сотрудника
 
-        // Отдел/подразделение сотрудника
-        public string Department { get; set; }  // Примеры: "IT", "Бухгалтерия", "Служба поддержки"
+        public string? Department { get; set; } = null!; // Отдел/подразделение сотрудника
     }
 }

@@ -1,0 +1,187 @@
+﻿@page
+@model StorageLocationModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = "Управление местами хранения";
+    ViewData["ActivePage"] = ManageNavPages.StorageLocation;
+}
+
+<div class="container-fluid">
+    <h4>@ViewData["Title"]</h4>
+
+    <!-- Кнопка добавления -->
+    <button class="btn btn-primary mb-3"
+            data-bs-toggle="modal"
+            data-bs-target="#editModal">
+        <i class="fas fa-plus"></i> Добавить место
+    </button>
+
+    <!-- Таблица с данными -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Адрес</th>
+                    <th>Помещение</th>
+                    <th>Зона</th>
+                    <th>Стеллаж</th>
+                    <th>Полка</th>
+                    <th>Ячейка</th>
+                    <th>Кладовщик</th>
+                    <th style="width: 120px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Locations)
+                {
+                    <tr>
+                        <td>@item.Address</td>
+                        <td>@item.Room</td>
+                        <td>@item.Zone</td>
+                        <td>@item.Rack</td>
+                        <td>@item.Shelf</td>
+                        <td>@item.Cell</td>
+                        <td>@(item.Storekeeper?.User?.Email ?? "Не указан")</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editModal"
+                                    data-id="@item.Id">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <form method="post" asp-page-handler="Delete" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('Удалить запись?')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post"
+                  asp-page="./StorageLocation"
+                  id="editForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактирование места хранения</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="Input.Id" />
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.Address" class="form-label"></label>
+                            <input asp-for="Input.Address" class="form-control" />
+                            <span asp-validation-for="Input.Address" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.Room" class="form-label"></label>
+                            <input asp-for="Input.Room" class="form-control" />
+                            <span asp-validation-for="Input.Room" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Input.Zone" class="form-label"></label>
+                            <input asp-for="Input.Zone" class="form-control" />
+                            <span asp-validation-for="Input.Zone" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Input.Rack" class="form-label"></label>
+                            <input asp-for="Input.Rack" class="form-control" />
+                            <span asp-validation-for="Input.Rack" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-2">
+                            <label asp-for="Input.Shelf" class="form-label"></label>
+                            <input asp-for="Input.Shelf" class="form-control" />
+                            <span asp-validation-for="Input.Shelf" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-2">
+                            <label asp-for="Input.Cell" class="form-label"></label>
+                            <input asp-for="Input.Cell" class="form-control" />
+                            <span asp-validation-for="Input.Cell" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-12">
+                            <label asp-for="Input.StorekeeperId" class="form-label">Кладовщик</label>
+                            <select asp-for="Input.StorekeeperId"
+                                    class="form-control"
+                                    asp-items="Model.StorekeeperOptions">
+                                <option value="">Выберите кладовщика</option>
+                            </select>
+                            <span asp-validation-for="Input.StorekeeperId" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $('#editModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var id = button.data('id');
+
+            if (id) {
+                fetch(`?handler=Location&id=${id}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        $('#Input_Id').val(data.id);
+                        $('#Input_Address').val(data.address);
+                        $('#Input_Room').val(data.room);
+                        $('#Input_Zone').val(data.zone);
+                        $('#Input_Rack').val(data.rack);
+                        $('#Input_Shelf').val(data.shelf);
+                        $('#Input_Cell').val(data.cell);
+                        $('#Input_StorekeeperId').val(data.storekeeperId);
+                    });
+            } else {
+                var form = $('#editForm')[0];
+                form.reset();
+                $('#Input_Id').val('00000000-0000-0000-0000-000000000000');
+                $('#Input_StorekeeperId').val('');
+            }
+        });
+
+        $('#editForm').on('submit', function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            var token = $form.find('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: $form.attr('action'),
+                method: 'POST',
+                data: $form.serialize(),
+                headers: {
+                    'RequestVerificationToken': token
+                },
+                success: function () {
+                    $('#editModal').modal('hide');
+                    window.location.reload();
+                },
+                error: function (xhr) {
+                    $('#editModal .modal-content').html(xhr.responseText);
+                }
+            });
+        });
+    </script>
+}

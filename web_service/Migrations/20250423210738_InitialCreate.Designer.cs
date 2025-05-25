@@ -12,8 +12,8 @@ using web_service.Data;
 namespace web_service.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250421220631_Init")]
-    partial class Init
+    [Migration("20250423210738_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -212,7 +212,6 @@ namespace web_service.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Department")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("TabNumber")
@@ -222,6 +221,29 @@ namespace web_service.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("EmployeeProfiles");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.RecordEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("BookingDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CarId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarId");
+
+                    b.ToTable("Records");
                 });
 
             modelBuilder.Entity("web_service.Data.Identity.ApplicationUser", b =>
@@ -375,6 +397,17 @@ namespace web_service.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.RecordEntity", b =>
+                {
+                    b.HasOne("web_service.Data.Entities.CarEntity", "Car")
+                        .WithMany()
+                        .HasForeignKey("CarId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Car");
                 });
 
             modelBuilder.Entity("web_service.Data.Entities.ClientProfile", b =>

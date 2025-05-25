@@ -34,6 +34,17 @@ namespace  web_service.Areas.Identity.Pages.Account.Manage
         //NEW!!!!
         public static string Cars => "Cars";
 
+        public static string Record => "Record";
+
+        public static string Employees => "Employees";
+
+        public static string Warehouses => "Warehouses";
+        public static string StorageLocation => "StorageLocation";
+        public static string CategoryPart => "CategoryPart";
+
+        public static string Parts => "Parts";
+        public static string PartInStorage => "PartInStorage";
+
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
@@ -85,7 +96,20 @@ namespace  web_service.Areas.Identity.Pages.Account.Manage
         //NEW!!!
         public static string CarsNavClass(ViewContext viewContext) => PageNavClass(viewContext, Cars);
 
-        /// <summary>
+        public static string RecordNavClass(ViewContext viewContext) => PageNavClass(viewContext, Record);
+
+        public static string EmployeesNavClass(ViewContext viewContext) => PageNavClass(viewContext, Employees);
+
+        public static string WarehousesNavClass(ViewContext viewContext) => PageNavClass(viewContext, Warehouses);
+
+        public static string StorageLocationNavClass(ViewContext viewContext) => PageNavClass(viewContext, StorageLocation);
+
+        public static string CategoryPartNavClass(ViewContext viewContext) => PageNavClass(viewContext, CategoryPart);
+
+        public static string PartsNavClass(ViewContext viewContext) => PageNavClass(viewContext, Parts);
+
+        public static string PartInStorageNavClass(ViewContext viewContext) => PageNavClass(viewContext, PartInStorage);
+        /// <summary>PartInStorage
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>

@@ -1,0 +1,26 @@
+﻿@model IEnumerable<web_service.Models.Record.RecordViewModel>
+
+<h2>Мои записи на обслуживание</h2>
+<p>
+    <a asp-action="Add">Записаться на обслуживание</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Автомобиль</th>
+            <th>Дата и время</th>
+            <th>Комментарий</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var record in Model)
+        {
+            <tr>
+                <td>@record.CarDisplay</td>
+                <td>@record.BookingDate.ToString("g")</td>
+                <td>@record.Comment</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,63 @@
+﻿@* файл: Areas/Identity/Pages/Account/Manage/Payment.cshtml *@
+@page
+@model web_service.Areas.Identity.Pages.Account.Manage.PaymentModel
+@{
+    ViewData["Title"] = "Оплата заказа-наряда";
+}
+
+<h2>Оплата заказа-наряда</h2>
+
+<!-- Форма выбора завершённого заказ-наряда -->
+<form method="post" asp-page-handler="Open">
+    <div class="form-group mb-3">
+        <label asp-for="SelectedWorkOrderId">Выберите заказ-наряд</label>
+        <select asp-for="SelectedWorkOrderId"
+                asp-items="Model.CompletedWorkOrders"
+                class="form-control">
+            <option value="">-- выберите --</option>
+        </select>
+        <span asp-validation-for="SelectedWorkOrderId" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Открыть</button>
+</form>
+
+@if (Model.SelectedWorkOrderId.HasValue && Model.SelectedWorkOrderDisplay != null)
+{
+    <hr />
+
+    <h4>Оплата для: @Model.SelectedWorkOrderDisplay</h4>
+    <form method="post" asp-page-handler="Confirm">
+        @* скрытое поле, чтобы сохранился выбранный WorkOrderId *@
+        <input type="hidden" asp-for="SelectedWorkOrderId" />
+
+        <div class="form-group mb-2">
+            <label asp-for="Input.PaymentType"></label>
+            <select asp-for="Input.PaymentType" class="form-control">
+                <option value="">-- выберите способ оплаты --</option>
+                <option value="Банковская карта">Банковская карта</option>
+                <option value="Наличные">Наличные</option>
+                <option value="QR код">QR код</option>
+            </select>
+            <span asp-validation-for="Input.PaymentType" class="text-danger"></span>
+        </div>
+
+        <div class="form-group mb-2">
+            <label asp-for="Input.DatePayment"></label>
+            <input asp-for="Input.DatePayment" type="date" class="form-control" />
+            <span asp-validation-for="Input.DatePayment" class="text-danger"></span>
+        </div>
+
+        <div class="form-group mb-2">
+            <label asp-for="Input.FinalCost"></label>
+            <input asp-for="Input.FinalCost" step="0.01" class="form-control" />
+            <span asp-validation-for="Input.FinalCost" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-success">Подтвердить оплату</button>
+    </form>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

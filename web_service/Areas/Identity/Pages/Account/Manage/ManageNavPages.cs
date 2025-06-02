@@ -32,20 +32,25 @@ namespace  web_service.Areas.Identity.Pages.Account.Manage
         public static string ChangePassword => "ChangePassword";
 
         //NEW!!!!
-        public static string Cars => "Cars";
+        public static string MyCars => "MyCars";
 
         public static string Record => "Record";
 
         public static string Employees => "Employees";
-
-        public static string Warehouses => "Warehouses";
         public static string StorageLocation => "StorageLocation";
         public static string CategoryPart => "CategoryPart";
 
         public static string Parts => "Parts";
         public static string PartInStorage => "PartInStorage";
+        public static string TypeService => "TypeService";
+        public static string RecordApprove => "RecordApprove";
+        public static string Work => "Work";
+        public static string WorkOrders => "WorkOrders";
+        public static string WorkOrderDetails => "WorkOrderDetails";
+        public static string Clients => "Clients";
+        public static string Payment => "Payment";
 
-        /// <summary>
+        /// <summary>TypeServiceRecordApprove Work WorkOrders Payment
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
@@ -73,7 +78,6 @@ namespace  web_service.Areas.Identity.Pages.Account.Manage
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public static string TwoFactorAuthentication => "TwoFactorAuthentication";
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -94,13 +98,11 @@ namespace  web_service.Areas.Identity.Pages.Account.Manage
         public static string ChangePasswordNavClass(ViewContext viewContext) => PageNavClass(viewContext, ChangePassword);
 
         //NEW!!!
-        public static string CarsNavClass(ViewContext viewContext) => PageNavClass(viewContext, Cars);
+        public static string MyCarsNavClass(ViewContext viewContext) => PageNavClass(viewContext, MyCars);
 
         public static string RecordNavClass(ViewContext viewContext) => PageNavClass(viewContext, Record);
 
         public static string EmployeesNavClass(ViewContext viewContext) => PageNavClass(viewContext, Employees);
-
-        public static string WarehousesNavClass(ViewContext viewContext) => PageNavClass(viewContext, Warehouses);
 
         public static string StorageLocationNavClass(ViewContext viewContext) => PageNavClass(viewContext, StorageLocation);
 
@@ -109,7 +111,22 @@ namespace  web_service.Areas.Identity.Pages.Account.Manage
         public static string PartsNavClass(ViewContext viewContext) => PageNavClass(viewContext, Parts);
 
         public static string PartInStorageNavClass(ViewContext viewContext) => PageNavClass(viewContext, PartInStorage);
-        /// <summary>PartInStorage
+
+        public static string TypeServiceNavClass(ViewContext viewContext) => PageNavClass(viewContext, TypeService);
+
+        public static string RecordApproveNavClass(ViewContext viewContext) => PageNavClass(viewContext, RecordApprove);
+
+        public static string WorkNavClass(ViewContext viewContext) => PageNavClass(viewContext, Work);
+
+        public static string WorkOrdersNavClass(ViewContext viewContext) => PageNavClass(viewContext, WorkOrders);
+
+        public static string WorkOrderDetailsNavClass(ViewContext viewContext) => PageNavClass(viewContext, WorkOrderDetails);
+
+        public static string ClientsNavClass(ViewContext viewContext) => PageNavClass(viewContext, Clients);
+
+        public static string PaymentNavClass(ViewContext viewContext) => PageNavClass(viewContext, Payment);
+
+        /// <summary>TypeService RecordApprove Work WorkOrders WorkOrderDetailsNavClass Clients Payment
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
@@ -137,7 +154,6 @@ namespace  web_service.Areas.Identity.Pages.Account.Manage
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
-        public static string TwoFactorAuthenticationNavClass(ViewContext viewContext) => PageNavClass(viewContext, TwoFactorAuthentication);
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used

@@ -21,6 +21,6 @@ namespace web_service.Data.Entities
         [Required]
         public string TabNumber { get; set; } = null!; // Табельный номер сотрудника
 
-        public string? Department { get; set; } = null!; // Отдел/подразделение сотрудника
+        public string? Position { get; set; } = null!; // Отдел/подразделение сотрудника
     }
 }

@@ -10,12 +10,15 @@
 
 <h4>@ViewData["Title"]</h4>
 
-<!-- Форма добавления нового сотрудника -->
+<!-- Форма создания -->
 <div class="card mb-4">
     <div class="card-header">Добавить сотрудника</div>
     <div class="card-body">
-        <form method="post">
+        <form method="post" asp-page-handler="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- При создании UserId пустой -->
+            <input type="hidden" asp-for="Input.UserId" />
 
             <div class="form-group">
                 <label asp-for="Input.Email"></label>
@@ -42,9 +45,9 @@
             </div>
 
             <div class="form-group mt-3">
-                <label asp-for="Input.Department"></label>
-                <input asp-for="Input.Department" class="form-control" />
-                <span asp-validation-for="Input.Department" class="text-danger"></span>
+                <label asp-for="Input.Position"></label>
+                <input asp-for="Input.Position" class="form-control" />
+                <span asp-validation-for="Input.Position" class="text-danger"></span>
             </div>
 
             <button type="submit" class="btn btn-primary mt-3">Создать</button>
@@ -52,7 +55,7 @@
     </div>
 </div>
 
-<!-- Существующие сотрудники -->
+<!-- Таблица сотрудников -->
 @if (!Model.Employees.Any())
 {
     <div class="alert alert-info">Сотрудники не найдены.</div>
@@ -65,23 +68,149 @@ else
                 <th>Email</th>
                 <th>Роли</th>
                 <th>Таб. №</th>
-                <th>Отдел</th>
+                <th>Должность</th>
+                <th>Действия</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var e in Model.Employees)
             {
-                <tr>
+                <tr data-user-id="@e.UserId">
                     <td>@e.Email</td>
                     <td>@string.Join(", ", e.Roles)</td>
                     <td>@e.TabNumber</td>
-                    <td>@e.Department</td>
+                    <td>@e.Position</td>
+                    <td>
+                        <!-- Кнопка «Редактировать» -->
+                        <button type="button"
+                                class="btn btn-sm btn-primary btn-edit"
+                                data-user-id="@e.UserId">
+                            Редактировать
+                        </button>
+
+                        <!-- Удаление -->
+                        <form method="post"
+                              asp-page-handler="Delete"
+                              style="display:inline;">
+                            <input type="hidden" name="userId" value="@e.UserId" />
+                            <button type="submit"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Точно удалить этого сотрудника?');">
+                                Удалить
+                            </button>
+                        </form>
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
 }
 
+<!-- Модальное окно редактирования -->
+<div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать сотрудника</h5>
+                @* Крестик не показываем *@
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-page-handler="Edit" id="edit-form">
+                    <input type="hidden" asp-for="Input.UserId" id="modal-UserId" />
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.Email"></label>
+                        <input asp-for="Input.Email" class="form-control" id="modal-Email" />
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.Role"></label>
+                        <select asp-for="Input.Role"
+                                asp-items="Model.RoleSelectList"
+                                class="form-control"
+                                id="modal-Role">
+                        </select>
+                        <span asp-validation-for="Input.Role" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.Password"></label>
+                        <input asp-for="Input.Password" class="form-control" type="password" id="modal-Password" readonly />
+                        @* при редактировании пароль не меняем, можно сделать readonly *@
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.TabNumber"></label>
+                        <input asp-for="Input.TabNumber" class="form-control" id="modal-TabNumber" />
+                        <span asp-validation-for="Input.TabNumber" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.Position"></label>
+                        <input asp-for="Input.Position" class="form-control" id="modal-Position" />
+                        <span asp-validation-for="Input.Position" class="text-danger"></span>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button"
+                                class="btn btn-secondary"
+                                onclick="$('#editEmployeeModal').modal('hide')">
+                            Отмена
+                        </button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <!-- jQuery (если ещё не подключён в Layout) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJ+Yy9N4/R+v6QEn6ztX4Sv5K2IdZh9f98tZU="
+            crossorigin="anonymous"></script>
+    <!-- Bootstrap JS (если ещё не подключён в Layout) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-Piv4xVNRyMGpqkYfYfTc+3laZN8exmNQhLo9I5M7uGQ5jOeLO0DnhbxtSi3H2dj"
+            crossorigin="anonymous"></script>
+
+    <script>
+        $(function () {
+            $(document).on('click', '.btn-edit', function (e) {
+                e.preventDefault();
+
+                var userId = $(this).attr('data-user-id');
+                var url = window.location.pathname.replace(/\/$/, "")
+                    + '?handler=EmployeeDetails&userId=' + encodeURIComponent(userId);
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (data) {
+                        if (data) {
+                            // Заполняем вклад модального окна
+                            $('#modal-UserId').val(data.userId);
+                            $('#modal-Email').val(data.email);
+                            $('#modal-Password').val(''); // readonly, не меняем
+                            $('#modal-Role').val(data.role);
+                            $('#modal-TabNumber').val(data.tabNumber);
+                            $('#modal-Position').val(data.position);
+
+                            $('#editEmployeeModal').modal('show');
+                        } else {
+                            alert('Данные сотрудника не найдены.');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("AJAX error:", status, error);
+                        alert('Ошибка при загрузке данных сотрудника.');
+                    }
+                });
+            });
+        });
+    </script>
 }

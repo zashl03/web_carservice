@@ -7,6 +7,8 @@
     var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
     var user = await UserManager.GetUserAsync(User);
     var isAdmin = user != null && await UserManager.IsInRoleAsync(user, "Administrator");
+    var isMechanic = user != null && await UserManager.IsInRoleAsync(user, "Mechanic");
+    var isStorekeeper = user != null && await UserManager.IsInRoleAsync(user, "Storekeeper");
     var isClient = user != null && await UserManager.IsInRoleAsync(user, "Client");
 }
 
@@ -15,7 +17,7 @@
         <a class="nav-link @ManageNavPages.IndexNavClass(ViewContext)"
            asp-area="Identity"
            asp-page="/Account/Manage/Index">
-            Profile
+            Профиль
         </a>
     </li>
     <li class="nav-item">
@@ -29,23 +31,23 @@
         <a class="nav-link @ManageNavPages.ChangePasswordNavClass(ViewContext)"
            asp-area="Identity"
            asp-page="/Account/Manage/ChangePassword">
-            Password
+            Пароль
         </a>
     </li>
     @if (isClient)
     {
         <li class="nav-item">
-            <a class="nav-link @ManageNavPages.CarsNavClass(ViewContext)"
+            <a class="nav-link @ManageNavPages.MyCarsNavClass(ViewContext)"
                asp-area="Identity"
                asp-page="/Account/Manage/MyCars">
-                My Cars
+                Мои автомобили
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link @ManageNavPages.RecordNavClass(ViewContext)"
                asp-area="Identity"
                asp-page="/Account/Manage/Record">
-                Record
+                Запись на обслуживание
             </a>
         </li>
     }
@@ -53,50 +55,105 @@
     @if (isAdmin)
     {
         <li class="nav-item">
+            <a class="nav-link @ManageNavPages.ClientsNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/Clients">
+                Клиенты
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.RecordApproveNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/RecordApprove">
+                Заявки на обслуживание
+            </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link @ManageNavPages.EmployeesNavClass(ViewContext)"
                asp-area="Identity"
                asp-page="/Account/Manage/Employees">
                 Сотрудники
             </a>
         </li>
-
         <li class="nav-item">
-            <a class="nav-link @ManageNavPages.WarehousesNavClass(ViewContext)"
+            <a class="nav-link @ManageNavPages.TypeServiceNavClass(ViewContext)"
                asp-area="Identity"
-               asp-page="/Account/Manage/Warehouses">
-                Склады и запчасти
+               asp-page="/Account/Manage/TypeService">
+                Услуги
             </a>
         </li>
     }
-    <li class="nav-item">
-        <a class="nav-link @ManageNavPages.StorageLocationNavClass(ViewContext)"
-           asp-area="Identity"
-           asp-page="/Account/Manage/StorageLocation">
-            Места хранения
-        </a>
-    </li>
+    <!----------------------------------------------------------------------------->
+    @if (isStorekeeper || isAdmin)
+    {
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.StorageLocationNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/StorageLocation">
+                Места хранения
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.CategoryPartNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/CategoryPart">
+                Категории запчастей
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.PartsNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/Parts">
+                Управление запчастями
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.PartInStorageNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/PartInStorage">
+                Запчасти в хранении
+            </a>
+        </li>
+    }
+    @if (isMechanic || isAdmin)
+    {
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.WorkNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/Work">
+                Работы
+            </a>
+        </li>
+    }
+    @if (isAdmin || isMechanic || isStorekeeper)
+    {
 
-    <li class="nav-item">
-        <a class="nav-link @ManageNavPages.CategoryPartNavClass(ViewContext)"
-           asp-area="Identity"
-           asp-page="/Account/Manage/CategoryPart">
-            Категории запчастей
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link @ManageNavPages.PartsNavClass(ViewContext)"
-           asp-area="Identity"
-           asp-page="/Account/Manage/Parts">
-            Управление запчастями
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link @ManageNavPages.PartInStorageNavClass(ViewContext)"
-           asp-area="Identity"
-           asp-page="/Account/Manage/PartInStorage">
-            Запчасти в хранении
-        </a>
-    </li>
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.WorkOrderDetailsNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/WorkOrderDetails">
+                Работа с заказ-нарядом
+            </a>
+        </li>
+    }
+    @if (isAdmin)
+    {
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.WorkOrdersNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/WorkOrders">
+                Заказ-наряды
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @ManageNavPages.PaymentNavClass(ViewContext)"
+               asp-area="Identity"
+               asp-page="/Account/Manage/Payment">
+                Оплата
+            </a>
+        </li>
+    }
+    
 
     @if (hasExternalLogins)
     {
@@ -109,17 +166,10 @@
         </li>
     }
     <li class="nav-item">
-        <a class="nav-link @ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext)"
-           asp-area="Identity"
-           asp-page="/Account/Manage/TwoFactorAuthentication">
-            Two-factor authentication
-        </a>
-    </li>
-    <li class="nav-item">
         <a class="nav-link @ManageNavPages.PersonalDataNavClass(ViewContext)"
            asp-area="Identity"
            asp-page="/Account/Manage/PersonalData">
-            Personal data
+            Персональные данные
         </a>
     </li>
 </ul>

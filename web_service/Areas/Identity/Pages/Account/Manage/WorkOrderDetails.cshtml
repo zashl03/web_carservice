@@ -1,0 +1,602 @@
+﻿@page
+@model web_service.Areas.Identity.Pages.Account.Manage.WorkOrderDetailsModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@using web_service.Data.Identity
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    ViewData["Title"] = "Работа с заказ-нарядом";
+
+    // Определяем роль текущего пользователя
+    var user = await UserManager.GetUserAsync(User);
+    var roles = user != null ? await UserManager.GetRolesAsync(user) : new List<string>();
+    bool isAdmin = roles.Contains("Administrator");
+    bool isStorekeeper = roles.Contains("Storekeeper");
+    bool isMechanic = roles.Contains("Mechanic");
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<!-- ============================================
+     1. Выбор заказ-наряда (select + кнопка “Открыть”)
+     ============================================ -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="post" asp-page-handler="OpenOrder" class="form-inline">
+            <div class="form-group mr-2 mb-2">
+                <label class="mr-2 mb-2" for="selectOrder">Заказ-наряд:</label>
+                <select asp-for="SelectedOrderId" asp-items="Model.AvailableOrders"
+                        class="form-control select2" id="selectOrder"
+                        style="min-width: 300px;">
+                    <option value="">— Выберите заказ-наряд —</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                Открыть
+            </button>
+        </form>
+    </div>
+</div>
+
+<hr />
+
+<!-- Если заказ не выбран или недоступен – выводим сообщение -->
+@if (Model.CurrentOrder == null)
+{
+    <div class="alert alert-info">
+        Нет доступных заказ-нарядов для вашей роли.
+    </div>
+    return;
+}
+
+<!-- ============================================
+     2. Информация о выбранном заказ-наряде + смена статуса
+     ============================================ -->
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Информация о заказ-наряде</strong>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Номер</dt>
+            <dd class="col-sm-9">@Model.CurrentOrder.WorkOrderNumber</dd>
+
+            <dt class="col-sm-3">Автомобиль</dt>
+            <dd class="col-sm-9">@Model.CurrentOrder.LicensePlate</dd>
+
+            <dt class="col-sm-3">Телефон клиента</dt>
+            <dd class="col-sm-9">@Model.CurrentOrder.ClientPhone</dd>
+
+            <dt class="col-sm-3">Дата назначения</dt>
+            <dd class="col-sm-9">@Model.CurrentOrder.DateAppointment.ToString("g")</dd>
+
+            <dt class="col-sm-3">Итоговая стоимость</dt>
+            <dd class="col-sm-9">
+                @(Model.CurrentOrder.Cost.HasValue
+                    ? Model.CurrentOrder.Cost.Value.ToString("N2") + " ₽"
+                    : "-")
+            </dd>
+
+            <dt class="col-sm-3">Текущий статус</dt>
+            <dd class="col-sm-9">
+                @if (Model.CurrentOrder.Status != "Closed")
+                {
+                    <form method="post" asp-page-handler="ChangeStatus" class="form-inline">
+                        <input type="hidden" asp-for="SelectedOrderId" />
+                        <select asp-for="NewStatus" class="form-control mr-2">
+                            <option value="New">New</option>
+                            <option value="Registered">Registered</option>
+                            <option value="PartsReady">PartsReady</option>
+                            <option value="InProgress">InProgress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Closed">Closed</option>
+                        </select>
+                        <button type="submit" class="btn btn-secondary">Сменить</button>
+                    </form>
+                }
+                else
+                {
+                    <div class="text-danger">Статус закрыт, смена недоступна</div>
+                }
+                <small class="text-muted">Текущий: @Model.CurrentOrder.Status</small>
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<hr />
+
+<!-- ============================================
+     3. Вкладки: “Работы” и “Запчасти”
+     ============================================ -->
+<ul class="nav nav-tabs mb-3" id="tasksPartsTab" role="tablist">
+    @if (!Model.IsStorekeeper)
+    {
+        <li class="nav-item">
+            <a class="nav-link @(Model.IsStorekeeper ? "" : "active")" id="tasks-tab" data-bs-toggle="tab"
+               href="#tasks" role="tab" aria-controls="tasks" aria-selected="@(Model.IsStorekeeper.ToString().ToLower())">
+            Работы
+        </a>
+    </li>
+    }
+    <li class="nav-item">
+        <a class="nav-link @(Model.IsStorekeeper ? "active" : "")" id="parts-tab" data-bs-toggle="tab"
+           href="#parts" role="tab" aria-controls="parts" 
+           aria-selected="@(Model.IsStorekeeper.ToString().ToLower())">
+            Запчасти
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content" id="tasksPartsContent">
+    <!-- --------------------------------------------------
+         3.1. Вкладка “Работы”
+         -------------------------------------------------- -->
+    @if (!Model.IsStorekeeper) {
+        <div class="tab-pane fade @(Model.IsStorekeeper ? "" : "show active")" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
+            @if (Model.CurrentOrder.Status != "Closed")
+            {
+                <div class="mb-3">
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createTaskModal">
+                        Добавить работу
+                    </button>
+                </div>
+            }
+
+        @if (!Model.WorkTasks.Any())
+        {
+            <div class="alert alert-info">Работы ещё не добавлены.</div>
+        }
+        else
+        {
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Работа</th>
+                        <th>Кол-во</th>
+                        <th>Ед. изм.</th>
+                        <th>Статус</th>
+                        <th>Факт. стоимость</th>
+                        <th>Механик</th>
+                        <th style="width:120px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model.WorkTasks)
+                    {
+                        <tr>
+                            <td>@t.WorkName</td>
+                            <td>@t.Quantity</td>
+                            <td>@t.MeasureUnit</td>
+                            <td>@t.Status</td>
+                            <td>@(t.FactCost.HasValue ? $"{t.FactCost.Value:N2} ₽" : "-")</td>
+                            <td>@t.MechanicName</td>
+                            <td>
+                                    @if (Model.CurrentOrder.Status != "Closed")
+                                    {
+                                        <button type="button" class="btn btn-sm btn-primary btn-edit-task"
+                                                data-id="@t.Id"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editTaskModal">
+                                            Редактировать
+                                        </button>
+                                        <form method="post" asp-page-handler="DeleteTask" style="display:inline;">
+                                            <input type="hidden" name="id" value="@t.Id" />
+                                            <button type="submit" class="btn btn-sm btn-danger"
+                                                    onclick="return confirm('Удалить эту работу?')">
+                                                Удалить
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Закрыто</span>
+                                    }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+    }
+    <!-- --------------------------------------------------
+         3.2. Вкладка “Запчасти”
+         -------------------------------------------------- -->
+    <div class="tab-pane fade @(Model.IsStorekeeper ? "show active" : "")" id="parts" role="tabpanel" aria-labelledby="parts-tab">
+        @if (Model.CurrentOrder.Status != "Closed")
+        {
+            <div class="mb-3">
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createPartModal">
+                    Добавить запчасть
+                </button>
+            </div>
+        }
+
+        @if (!Model.PartInWorks.Any())
+        {
+            <div class="alert alert-info">Запчасти ещё не добавлены.</div>
+        }
+        else
+        {
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Работа</th>
+                        <th>Запчасть</th>
+                        <th>Кол-во</th>
+                        <th>Стоимость</th>
+                        <th>Кладовщик</th>
+                        <th style="width:120px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var piw in Model.PartInWorks)
+                    {
+                        <tr>
+                            <td>@piw.WorkName</td>
+                            <td>@piw.PartName</td>
+                            <td>@piw.Quantity</td>
+                            <td>@string.Format("{0:N2} ₽", piw.Cost)</td>
+                            <td>@piw.StorekeeperName</td>
+                            <td>
+                                @if (Model.CurrentOrder.Status != "Closed")
+                                {
+                                    <button type="button" class="btn btn-sm btn-primary btn-edit-part"
+                                            data-id="@piw.Id"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editPartModal">
+                                        Редактировать
+                                    </button>
+                                    <form method="post" asp-page-handler="DeletePart" style="display:inline;">
+                                        <input type="hidden" name="id" value="@piw.Id" />
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Удалить эту запчасть?')">
+                                            Удалить
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Закрыто</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<hr />
+
+<!-- ============================================
+     4. Модальные окна
+     ============================================ -->
+<!-- 4.1. Модалка “Создать работу” -->
+<div class="modal fade" id="createTaskModal" tabindex="-1" role="dialog" aria-labelledby="createTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="CreateTask">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createTaskModalLabel">Добавить работу</h5>
+                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Закрыть">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" asp-for="SelectedOrderId" />
+
+                    <div class="form-group">
+                        <label asp-for="CreateTask.WorkId"></label>
+                        <select asp-for="CreateTask.WorkId"
+                                asp-items="Model.WorksSelectList"
+                                class="form-control select2">
+                            <option value="">— Выберите работу —</option>
+                        </select>
+                        <span asp-validation-for="CreateTask.WorkId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="CreateTask.Quantity"></label>
+                        <input asp-for="CreateTask.Quantity" class="form-control" type="number" min="1" />
+                        <span asp-validation-for="CreateTask.Quantity" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="CreateTask.MeasureUnit"></label>
+                        <input asp-for="CreateTask.MeasureUnit" class="form-control" />
+                        <span asp-validation-for="CreateTask.MeasureUnit" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="CreateTask.Status"></label>
+                        <input asp-for="CreateTask.Status" class="form-control" />
+                        <span asp-validation-for="CreateTask.Status" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="CreateTask.FactCost"></label>
+                        <input asp-for="CreateTask.FactCost" class="form-control" type="number" step="0.01" />
+                        <span asp-validation-for="CreateTask.FactCost" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="CreateTask.MechanicId"></label>
+                        <select asp-for="CreateTask.MechanicId"
+                                asp-items="Model.MechanicsSelectList"
+                                class="form-control select2">
+                            <option value="">— Механик (необязательно) —</option>
+                        </select>
+                        <span asp-validation-for="CreateTask.MechanicId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Создать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 4.2. Модалка “Редактировать работу” -->
+<div class="modal fade" id="editTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="EditTask">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактировать работу</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" asp-for="SelectedOrderId" />
+                    <input type="hidden" asp-for="EditTask.Id" />
+
+                    <div class="form-group mb-2">
+                        <label asp-for="EditTask.WorkId"></label>
+                        <select asp-for="EditTask.WorkId"
+                                asp-items="Model.WorksSelectList"
+                                class="form-control select2"
+                                id="edit-WorkId">
+                            <option value="">— Выберите работу —</option>
+                        </select>
+                        <span asp-validation-for="EditTask.WorkId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="EditTask.Quantity"></label>
+                        <input asp-for="EditTask.Quantity"
+                               class="form-control"
+                               type="number" min="1"
+                               id="edit-Quantity" />
+                        <span asp-validation-for="EditTask.Quantity" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="EditTask.MeasureUnit"></label>
+                        <input asp-for="EditTask.MeasureUnit"
+                               class="form-control"
+                               id="edit-MeasureUnit" />
+                        <span asp-validation-for="EditTask.MeasureUnit" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="EditTask.Status"></label>
+                        <input asp-for="EditTask.Status"
+                               class="form-control"
+                               id="edit-Status" />
+                        <span asp-validation-for="EditTask.Status" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="EditTask.FactCost"></label>
+                        <input asp-for="EditTask.FactCost"
+                               class="form-control"
+                               type="number" step="0.01"
+                               id="edit-FactCost" />
+                        <span asp-validation-for="EditTask.FactCost" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="EditTask.MechanicId"></label>
+                        <select asp-for="EditTask.MechanicId"
+                                asp-items="Model.MechanicsSelectList"
+                                class="form-control select2"
+                                id="edit-MechanicId">
+                            <option value="">— Механик (необязательно) —</option>
+                        </select>
+                        <span asp-validation-for="EditTask.MechanicId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 4.3. Модалка “Создать запчасть” -->
+<div class="modal fade" id="createPartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="CreatePart">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить запчасть</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" asp-for="SelectedOrderId" />
+
+                    <div class="mb-3">
+                        <label asp-for="CreatePart.WorkTaskId" class="form-label"></label>
+                        <select asp-for="CreatePart.WorkTaskId" asp-items="Model.WorkTasksSelectList" class="form-select select2">
+                            <option value="">— Выберите задачу —</option>
+                        </select>
+                        <span asp-validation-for="CreatePart.WorkTaskId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CreatePart.PartId" class="form-label"></label>
+                        <select asp-for="CreatePart.PartId" asp-items="Model.PartsInStockSelectList" class="form-select select2">
+                            <option value="">— Выберите запчасть —</option>
+                        </select>
+                        <span asp-validation-for="CreatePart.PartId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CreatePart.StorekeeperId" class="form-label"></label>
+                        <select asp-for="CreatePart.StorekeeperId" asp-items="Model.StorekeepersSelectList" class="form-select select2">
+                            <option value="">— Кладовщик (необязательно) —</option>
+                        </select>
+                        <span asp-validation-for="CreatePart.StorekeeperId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CreatePart.Quantity" class="form-label"></label>
+                        <input asp-for="CreatePart.Quantity" class="form-control" type="number" min="1" />
+                        <span asp-validation-for="CreatePart.Quantity" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CreatePart.Cost" class="form-label"></label>
+                        <input asp-for="CreatePart.Cost" class="form-control" type="number" step="0.01" />
+                        <span asp-validation-for="CreatePart.Cost" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Создать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 4.4. Модалка “Редактировать запчасть” -->
+<!-- Модалка “Редактировать запчасть” -->
+<div class="modal fade" id="editPartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="EditPart">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактировать запчасть</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" asp-for="SelectedOrderId" />
+                    <input type="hidden" asp-for="EditPart.Id" />
+
+                    <div class="form-group mb-2">
+                        <label asp-for="EditPart.WorkTaskId"></label>
+                        <select asp-for="EditPart.WorkTaskId" asp-items="Model.WorkTasksSelectList"
+                                class="form-control select2" id="edit-PartWorkTaskId">
+                            <option value="">— Выберите задачу —</option>
+                        </select>
+                        <span asp-validation-for="EditPart.WorkTaskId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="EditPart.PartId"></label>
+                        <select asp-for="EditPart.PartId" asp-items="Model.PartsInStockSelectList"
+                                class="form-control select2" id="edit-PartPartId">
+                            <option value="">— Выберите запчасть —</option>
+                        </select>
+                        <span asp-validation-for="EditPart.PartId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="EditPart.StorekeeperId"></label>
+                        <select asp-for="EditPart.StorekeeperId" asp-items="Model.StorekeepersSelectList"
+                                class="form-control select2" id="edit-PartStorekeeperId">
+                            <option value="">— Кладовщик (необязательно) —</option>
+                        </select>
+                        <span asp-validation-for="EditPart.StorekeeperId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="EditPart.Quantity"></label>
+                        <input asp-for="EditPart.Quantity" class="form-control" type="number" min="1"
+                               id="edit-PartQuantity" />
+                        <span asp-validation-for="EditPart.Quantity" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="EditPart.Cost"></label>
+                        <input asp-for="EditPart.Cost" class="form-control" type="number" step="0.01"
+                               id="edit-PartCost" />
+                        <span asp-validation-for="EditPart.Cost" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ============================================
+     5. Подключение скриптов (jQuery, Bootstrap, Select2) и JS-логики
+     ============================================ -->
+@section Scripts {
+    <!-- jQuery (если не подключён) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJ+Yy9N4/R+v6QEn6ztX4Sv5K2IdZh9f98tZU="
+            crossorigin="anonymous"></script>
+
+    <!-- Bootstrap JS (для вкладок и модалок) -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"
+            integrity="sha384-LtrjvnR4/J8Xv8KnukRyT9y1y+0JVpaz6bBiYDRgqJ6qz6jIW1TL7knr3N0uf0Hg"
+            crossorigin="anonymous"></script>
+
+    <!-- Select2 CSS & JS (автопоиск в <select>) -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+
+
+    <script>
+        $(function () {
+            // Редактировать работу
+            $('.btn-edit-task').on('click', function () {
+                var taskId = $(this).data('id');
+                var url = window.location.pathname.replace(/\/$/, "") + '?handler=GetTask&id=' + taskId;
+                $.get(url, function (data) {
+                    if (!data) { alert('Данные задачи не найдены.'); return; }
+                    $('#edit-WorkId').val(data.workId).trigger('change');
+                    $('#edit-Quantity').val(data.quantity);
+                    $('#edit-MeasureUnit').val(data.measureUnit);
+                    $('#edit-Status').val(data.status);
+                    $('#edit-FactCost').val(data.factCost);
+                    $('#edit-MechanicId').val(data.mechanicId || '').trigger('change');
+                    $('input[name="SelectedOrderId"]').val('@Model.SelectedOrderId');
+                    $('input[name="EditTask.Id"]').val(data.id);
+                    $('#editTaskModal').modal('show');
+                }).fail(function () { alert('Ошибка при загрузке данных задачи.'); });
+            });
+
+            // Редактировать запчасть
+            $('.btn-edit-part').on('click', function () {
+                var partId = $(this).data('id');
+                var url = window.location.pathname.replace(/\/$/, "") + '?handler=GetPart&id=' + partId;
+                $.get(url, function (data) {
+                    if (!data) { alert('Данные запчасти не найдены.'); return; }
+                    $('#edit-PartWorkTaskId').val(data.workTaskId).trigger('change');
+                    $('#edit-PartPartId').val(data.partId).trigger('change');
+                    $('#edit-PartStorekeeperId').val(data.storekeeperId || '').trigger('change');
+                    $('#edit-PartQuantity').val(data.quantity);
+                    $('#edit-PartCost').val(data.cost);
+                    $('input[name="SelectedOrderId"]').val('@Model.SelectedOrderId');
+                    $('input[name="EditPart.Id"]').val(data.id);
+                    $('#editPartModal').modal('show');
+                }).fail(function () { alert('Ошибка при загрузке данных запчасти.'); });
+            });
+        });
+    </script>
+}

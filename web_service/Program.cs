@@ -11,8 +11,9 @@ using Microsoft.EntityFrameworkCore;
 using web_service.Data;
 using web_service.Data.Identity;
 using AutoMapper;
-using web_service.Services;
-using web_service.Mappings;
+using web_service.Data.Entities;
+//using web_service.Services;
+//using web_service.Mappings;
 
 var builder = WebApplication.CreateBuilder(args); // Создание билдера приложения
 
@@ -55,9 +56,9 @@ builder.Services.AddRazorPages(options =>
 });
 
 // 1.4 Регистрация кастомных сервисов
-builder.Services.AddAutoMapper(typeof(DomainToEntityProfile).Assembly); // AutoMapper
-builder.Services.AddScoped<ICarService, CarService>(); // Сервис работы с автомобилями
-builder.Services.AddScoped<IRecordService, RecordService>();
+//builder.Services.AddAutoMapper(typeof(DomainToEntityProfile).Assembly); // AutoMapper
+//builder.Services.AddScoped<ICarService, CarService>(); // Сервис работы с автомобилями
+//builder.Services.AddScoped<IRecordService, RecordService>();
 //builder.Services.AddScoped<IWarehouseService, WarehouseService>();
 
 /***************************
@@ -68,9 +69,11 @@ var app = builder.Build(); // Сборка приложения
 // 2.1 Инициализация системных ролей
 using (var scope = app.Services.CreateScope()) // Создание временного scope
 {
+    var services = scope.ServiceProvider;
     var roleMgr = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
     var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var db = services.GetRequiredService<ApplicationDbContext>();
     string[] roles = { "Client", "Storekeeper", "Administrator", "Mechanic" }; // Основные роли системы
 
     foreach (var role in roles)
@@ -98,6 +101,14 @@ using (var scope = app.Services.CreateScope()) // Создание времен�
                 var code = await userMgr.GenerateEmailConfirmationTokenAsync(admin);
                 await userMgr.ConfirmEmailAsync(admin, code);
                 Console.WriteLine($"Seeded default admin: {adminEmail}");
+                var employeeProfile = new EmployeeProfile
+                {
+                    UserId = admin.Id,
+                    TabNumber = "",
+                    Position = "ADM"
+                };
+                db.EmployeeProfiles.Add(employeeProfile);
+                await db.SaveChangesAsync();
             }
             else
             {
@@ -111,6 +122,7 @@ using (var scope = app.Services.CreateScope()) // Создание времен�
             await userMgr.ConfirmEmailAsync(existingAdmin, token);
             Console.WriteLine($"[Seed] Admin email confirmed: {adminEmail}");
         }
+
     }
 }
 

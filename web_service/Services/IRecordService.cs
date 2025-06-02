@@ -12,7 +12,7 @@ namespace web_service.Services
 
         /// Создаёт новую запись на обслуживание для указанного клиента и автомобиля.
 
-        Task CreateRecordAsync(string userId, Guid carId, DateTime bookingDate, string comment);
+        Task CreateRecordAsync(string userId, Guid carId, DateTime DateAppointment, string comment);
 
         /// Возвращает все записи на обслуживание, принадлежащие данному клиенту.
         Task<IEnumerable<RecordViewModel>> GetUserRecordsAsync(string userId);

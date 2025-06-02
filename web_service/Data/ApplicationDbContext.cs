@@ -32,12 +32,16 @@ namespace web_service.Data
 
         // Таблица записей на обслуживание (N записей к 1 автомобилю)
         public DbSet<RecordEntity> Records { get; set; }
-        public DbSet<WarehouseEntity> Warehouses { get; set; }
         public DbSet<PartEntity> Parts { get; set; }
         public DbSet<StorageLocationEntity> StorageLocations { get; set; }
         public DbSet<PartInStorageEntity> PartInStorages { get; set; }
         public DbSet<CategoryPartEntity> CategoryParts { get; set; }
-
+        public DbSet<WorkEntity> Works { get; set; } = null!;
+        public DbSet<WorkOrderEntity> WorkOrders { get; set; } = null!;
+        public DbSet<TypeServiceEntity> TypeServices { get; set; }
+        public DbSet<WorkTaskEntity> WorkTasks { get; set; } = null!;
+        public DbSet<PartInWorkEntity> PartInWorks { get; set; } = null!;  // ← наша новая сущность
+        public DbSet<PaymentEntity> Payments { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder); // Инициализация настроек Identity
@@ -81,27 +85,18 @@ namespace web_service.Data
                       .HasForeignKey(r => r.CarId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
-            // Warehouse ↔ EmployeeProfile (1-to-1)
-            builder.Entity<WarehouseEntity>(entity =>
-            {
-                entity.HasOne(w => w.Storekeeper)
-                      .WithOne() // без навигационного свойства в EmployeeProfile
-                      .HasForeignKey<WarehouseEntity>(w => w.StorekeeperId)
-                      .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            // Warehouse → Parts (1-to-many)
-            /*
-            builder.Entity<PartEntity>(entity =>
-            {
-                entity.HasOne(p => p.Warehouse)
-                      .WithMany() // Без коллекции на стороне склада
-                      .HasForeignKey(p => p.WarehouseId)
-                      .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasIndex(p => p.ServicePn).IsUnique();
-            });
-            */
+            //связь Record -> TypeService
+            builder.Entity<RecordEntity>()
+                .HasOne(r => r.TypeService)
+                .WithMany()         
+                .HasForeignKey(r => r.TypeServiceId)
+                .OnDelete(DeleteBehavior.Restrict);
+            //связь Record -> EmployeeProfile
+            builder.Entity<RecordEntity>()
+                .HasOne(r => r.Administrator)
+                .WithMany()           
+                .HasForeignKey(r => r.AdministratorId)
+                .OnDelete(DeleteBehavior.SetNull);
             // -------------------------------------------------------------------------------------------------------
             // ЗАПЧАСТИ И СКЛАД
             builder.Entity<PartInStorageEntity>()
@@ -154,6 +149,48 @@ namespace web_service.Data
                 entity.HasIndex(c => new { c.CategoryName, c.ParentId })
                       .IsUnique();
             });
+
+            // WorkOrder -> Record
+            builder.Entity<WorkOrderEntity>()
+                .HasOne(wo => wo.Record)
+                .WithOne()
+                .HasForeignKey<WorkOrderEntity>(wo => wo.RecordId);
+
+            // WorkOrder -> WorkTask
+            builder.Entity<WorkTaskEntity>()
+                .HasOne(wt => wt.WorkOrder)
+                .WithMany()
+                .HasForeignKey(wt => wt.WorkOrderId);
+
+            // Employee -> WorkTask
+            builder.Entity<WorkTaskEntity>()
+                .HasOne(wt => wt.Mechanic)
+                .WithMany()
+                .HasForeignKey(wt => wt.MechanicId);
+
+            // Employee -> WorkTask
+            builder.Entity<WorkTaskEntity>()
+                .HasOne(wt => wt.Work)
+                .WithMany()
+                .HasForeignKey(wt => wt.WorkId);
+
+            // WorkTask -> PartInWork 
+            builder.Entity<PartInWorkEntity>()
+                .HasOne(piw => piw.WorkTask)
+                .WithMany()
+                .HasForeignKey(piw => piw.WorkTaskId);
+
+            // Employee -> WorkTask
+            builder.Entity<PartInWorkEntity>()
+                .HasOne(piw => piw.Storekeeper)
+                .WithMany()
+                .HasForeignKey(piw => piw.StorekeeperId);
+
+            // Part -> WorkTask
+            builder.Entity<PartInWorkEntity>()
+                .HasOne(piw => piw.Part)
+                .WithMany()
+                .HasForeignKey(piw => piw.PartId);
         }
     }
 }

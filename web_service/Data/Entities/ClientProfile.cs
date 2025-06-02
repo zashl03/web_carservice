@@ -18,10 +18,19 @@ namespace web_service.Data.Entities
         [ForeignKey(nameof(User))]
         public string UserId { get; set; } = null!;
 
+        [Required]
+        public DateTime DateCreated { get; set; }
+
         // Навигационное свойство к ApplicationUser
         public ApplicationUser User { get; set; } = null!;
 
         // Коллекция автомобилей клиента (отношение 1 ко многим)
         public ICollection<CarEntity> Cars { get; set; } = new List<CarEntity>();
+
+        public ClientProfile()
+        {
+            // EF Core вызовет этот конструктор при создании новой сущности
+            DateCreated = DateTime.UtcNow;
+        }
     }
 }

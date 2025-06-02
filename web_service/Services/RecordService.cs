@@ -22,7 +22,7 @@ namespace web_service.Services
             _db = db;
         }
 
-        public async Task CreateRecordAsync(string userId, Guid carId, DateTime bookingDate, string comment)
+        public async Task CreateRecordAsync(string userId, Guid carId, DateTime DateAppointment, string comment)
         {
             // Проверяем, что автомобиль принадлежит текущему клиенту
             var car = await _db.Cars
@@ -37,7 +37,7 @@ namespace web_service.Services
             {
                 Id = Guid.NewGuid(),
                 CarId = carId,
-                BookingDate = bookingDate,
+                DateAppointment = DateAppointment,
                 Comment = comment
             };
 
@@ -56,7 +56,7 @@ namespace web_service.Services
                 {
                     Id = r.Id,
                     CarDisplay = $"{r.Car.Brand} {r.Car.Model} ({r.Car.VIN})",
-                    BookingDate = r.BookingDate,
+                    DateAppointment = r.DateAppointment,
                     Comment = r.Comment
                 })
                 .ToListAsync();

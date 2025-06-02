@@ -1,67 +1,266 @@
 ﻿@page
 @model web_service.Areas.Identity.Pages.Account.Manage.MyCarsModel
-@using web_service.Models.Car
-@using Microsoft.AspNetCore.Identity
-@using web_service.Data.Identity;
-@inject UserManager<ApplicationUser> UserManager
-
 @{
-    ViewData["Title"] = "My Cars";
-    ViewData["ActivePage"] = ManageNavPages.Cars;
+    ViewData["Title"] = "Мои автомобили";
 }
 
-<h4>@ViewData["Title"]</h4>
+<h2>Мои автомобили</h2>
 
-<!-- Список автомобилей -->
-<div class="mb-4">
-    @if (Model.Cars.Any())
-    {
-        <div class="row">
-            @foreach (var car in Model.Cars)
-            {
-                <div class="col-md-4 mb-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">@car.Brand @car.Model</h5>
-                            <p class="card-text">VIN: @car.VIN</p>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-info">No cars found</div>
-    }
-</div>
-
-<!-- Форма добавления -->
-<div class="card">
-    <div class="card-header">Add New Car</div>
+<!-- ================================================
+     1. Форма добавления/редактирования машины (вверху)
+     ================================================ -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Добавить автомобиль</h5>
+    </div>
     <div class="card-body">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            
-            <div class="form-group">
-                <label asp-for="Input.Brand" class="control-label"></label>
-                <input asp-for="Input.Brand" class="form-control" />
-                <span asp-validation-for="Input.Brand" class="text-danger"></span>
-            </div>
+        <form id="car-form"
+              method="post"
+              asp-page-handler="Save"
+              asp-route-ClientId="@Model.ClientId">
+            <input type="hidden" name="ClientId" value="@Model.ClientId" />
 
-            <div class="form-group">
-                <label asp-for="Input.Model" class="control-label"></label>
-                <input asp-for="Input.Model" class="form-control" />
-                <span asp-validation-for="Input.Model" class="text-danger"></span>
-            </div>
+            @* Скрытое поле для Id (если редактируем существующую машину) *@
+            <input type="hidden" asp-for="Input.Id" id="Input_Id" />
 
-            <div class="form-group">
-                <label asp-for="Input.VIN" class="control-label"></label>
+            <div class="form-group mb-2">
+                <label asp-for="Input.VIN">VIN</label>
                 <input asp-for="Input.VIN" class="form-control" />
                 <span asp-validation-for="Input.VIN" class="text-danger"></span>
             </div>
 
-            <button type="submit" class="btn btn-primary mt-3">Add Car</button>
+            <div class="form-group mb-2">
+                <label asp-for="Input.LicencePlate">Номерной знак</label>
+                <input asp-for="Input.LicencePlate" class="form-control" />
+                <span asp-validation-for="Input.LicencePlate" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Input.Brand">Марка</label>
+                <input asp-for="Input.Brand" class="form-control" />
+                <span asp-validation-for="Input.Brand" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Input.Model">Модель</label>
+                <input asp-for="Input.Model" class="form-control" />
+                <span asp-validation-for="Input.Model" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Input.Mileage">Пробег</label>
+                <input asp-for="Input.Mileage" class="form-control" />
+                <span asp-validation-for="Input.Mileage" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Input.Year">Год выпуска</label>
+                <input asp-for="Input.Year" type="number" class="form-control" />
+                <span asp-validation-for="Input.Year" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Input.Color">Цвет</label>
+                <input asp-for="Input.Color" class="form-control" />
+                <span asp-validation-for="Input.Color" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                @(Model.Input != null && Model.Input.Id.HasValue && Model.Input.Id != Guid.Empty
+                    ? "Сохранить"
+                    : "Добавить")
+            </button>
         </form>
     </div>
 </div>
+
+<hr />
+
+<!-- ================================================
+     2. Таблица с автомобилями (до 10 штук)
+     ================================================ -->
+<div style="max-height:600px; overflow:auto;">
+    <table class="table table-striped" id="cars-table">
+        <thead>
+            <tr>
+                <th>VIN</th>
+                <th>Номерной знак</th>
+                <th>Марка</th>
+                <th>Модель</th>
+                <th>Пробег</th>
+                <th>Год</th>
+                <th>Цвет</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.MyCars != null && Model.MyCars.Count > 0)
+            {
+                foreach (var car in Model.MyCars)
+                {
+                    <tr data-id="@car.Id">
+                        <td>@car.VIN</td>
+                        <td>@car.LicencePlate</td>
+                        <td>@car.Brand</td>
+                        <td>@car.Model</td>
+                        <td>@car.Mileage</td>
+                        <td>@car.Year</td>
+                        <td>@car.Color</td>
+                        <td>
+                            <!-- Кнопка редактирования -->
+                            <button type="button"
+                                    class="btn btn-sm btn-primary btn-edit"
+                                    data-id="@car.Id"
+                                    data-vin="@car.VIN"
+                                    data-licenceplate="@car.LicencePlate"
+                                    data-brand="@car.Brand"
+                                    data-model="@car.Model"
+                                    data-mileage="@car.Mileage"
+                                    data-year="@car.Year"
+                                    data-color="@car.Color">
+                                Редактировать
+                            </button>
+
+                            <!-- Кнопка удаления -->
+                            <form method="post"
+                                  asp-page-handler="Delete"
+                                  asp-route-id="@car.Id"
+                                  asp-route-ClientId="@Model.ClientId"
+                                  style="display:inline;">
+                                <input type="hidden" name="ClientId" value="@Model.ClientId" />
+                                <button type="submit" class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Удалить этот автомобиль?');">
+                                    Удалить
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="8" class="text-center">У вас ещё нет автомобилей.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- ================================================
+     3. Модальное окно для редактирования автомобиля
+     ================================================ -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать автомобиль</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post"
+                      asp-page-handler="Save"
+                      asp-route-ClientId="@Model.ClientId">
+                    <input type="hidden" name="ClientId" value="@Model.ClientId" />
+                    <input type="hidden" asp-for="Input.Id" id="edit-Id" />
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.VIN">VIN</label>
+                        <input asp-for="Input.VIN" class="form-control" id="edit-VIN" />
+                        <span asp-validation-for="Input.VIN" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.LicencePlate">Номерной знак</label>
+                        <input asp-for="Input.LicencePlate" class="form-control" id="edit-LicencePlate" />
+                        <span asp-validation-for="Input.LicencePlate" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.Brand">Марка</label>
+                        <input asp-for="Input.Brand" class="form-control" id="edit-Brand" />
+                        <span asp-validation-for="Input.Brand" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.Model">Модель</label>
+                        <input asp-for="Input.Model" class="form-control" id="edit-Model" />
+                        <span asp-validation-for="Input.Model" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.Mileage">Пробег</label>
+                        <input asp-for="Input.Mileage" class="form-control" id="edit-Mileage" />
+                        <span asp-validation-for="Input.Mileage" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.Year">Год выпуска</label>
+                        <input asp-for="Input.Year" type="number" class="form-control" id="edit-Year" />
+                        <span asp-validation-for="Input.Year" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.Color">Цвет</label>
+                        <input asp-for="Input.Color" class="form-control" id="edit-Color" />
+                        <span asp-validation-for="Input.Color" class="text-danger"></span>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Отмена
+                        </button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            $(document).on('click', '.btn-edit', function () {
+                var id = $(this).data('id');
+                var vin = $(this).data('vin');
+                var licencePlate = $(this).data('licenceplate');
+                var brand = $(this).data('brand');
+                var model = $(this).data('model');
+                var mileage = $(this).data('mileage');
+                var year = $(this).data('year');
+                var color = $(this).data('color');
+
+                // Заполняем поля модального окна
+                $('#edit-Id').val(id);
+                $('#edit-VIN').val(vin);
+                $('#edit-LicencePlate').val(licencePlate);
+                $('#edit-Brand').val(brand);
+                $('#edit-Model').val(model);
+                $('#edit-Mileage').val(mileage);
+                $('#edit-Year').val(year);
+                $('#edit-Color').val(color);
+
+                // Заполняем основную форму
+                $('#Input_Id').val(id);
+                $('input[name="Input.VIN"]').val(vin);
+                $('input[name="Input.LicencePlate"]').val(licencePlate);
+                $('input[name="Input.Brand"]').val(brand);
+                $('input[name="Input.Model"]').val(model);
+                $('input[name="Input.Mileage"]').val(mileage);
+                $('input[name="Input.Year"]').val(year);
+                $('input[name="Input.Color"]').val(color);
+
+                // Показываем модалку
+                $('#editModal').modal('show');
+
+                // Прокручиваем к форме, если нужно
+                if ($('#car-form').length) {
+                    $('html, body').animate({
+                        scrollTop: $('#car-form').offset().top
+                    }, 500);
+                }
+            });
+        });
+    </script>
+}

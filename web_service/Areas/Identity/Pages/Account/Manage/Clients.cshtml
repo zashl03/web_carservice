@@ -1,0 +1,399 @@
+﻿@page
+@model web_service.Areas.Identity.Pages.Account.Manage.ClientsModel
+@{
+    ViewData["Title"] = "Управление клиентами";
+}
+
+<h2>Управление клиентами</h2>
+
+<!-- ======= Форма добавления нового клиента ======= -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Добавить нового клиента</h5>
+    </div>
+    <div class="card-body">
+        <!-- Привязка к handler=Create, id формы для JS -->
+        <form method="post" asp-page-handler="Create" id="createClientForm">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row gy-3">
+                <!-- Email -->
+                <div class="col-md-4">
+                    <label asp-for="CreateInput.Email" class="form-label"></label>
+                    <input asp-for="CreateInput.Email" class="form-control" />
+                    <span asp-validation-for="CreateInput.Email" class="text-danger"></span>
+                </div>
+
+                <!-- PhoneNumber: здесь возвращено именно то поле, что было раньше -->
+                <div class="col-md-4">
+                    <label asp-for="CreateInput.PhoneNumber" class="form-label"></label>
+                    <input asp-for="CreateInput.PhoneNumber"
+                           class="form-control"
+                           id="create-PhoneNumber"
+                           placeholder="+7 (___) ___-__-__"
+                           autocomplete="tel" />
+                    <span asp-validation-for="CreateInput.PhoneNumber" class="text-danger"></span>
+                </div>
+
+                <!-- FullName -->
+                <div class="col-md-4">
+                    <label asp-for="CreateInput.FullName" class="form-label"></label>
+                    <input asp-for="CreateInput.FullName" class="form-control" />
+                    <span asp-validation-for="CreateInput.FullName" class="text-danger"></span>
+                </div>
+
+                <!-- Password -->
+                <div class="col-md-4">
+                    <label asp-for="CreateInput.Password" class="form-label"></label>
+                    <input asp-for="CreateInput.Password"
+                           type="password"
+                           class="form-control" />
+                    <span asp-validation-for="CreateInput.Password" class="text-danger"></span>
+                </div>
+
+                <!-- Кнопка добавить -->
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100">Добавить клиента</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ======= Поле поиска клиентов ======= -->
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="Search"
+               value="@Model.Search"
+               class="form-control"
+               placeholder="Поиск по Email / ФИО / Телефон" />
+        <button class="btn btn-outline-secondary" type="submit">Поиск</button>
+    </div>
+</form>
+<style>
+    /* Вся таблица остаётся стандартной, но столбец с ФИО
+         разрешаем переносить слова */
+    .fio-column {
+        white-space: normal;
+        word-break: break-word;
+        /* по желанию можно задать максимальную ширину,
+           чтобы точно ограничить ширину колонки */
+        max-width: 150px;
+    }
+</style>
+<!-- ======= Таблица клиентов ======= -->
+<div class="table-responsive mb-4">
+    <table class="table table-bordered table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Email</th>
+                <th>Телефон</th>
+                <th class="fio-column">ФИО</th>
+                <th>Дата создания</th>
+                <th>Автомобили</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var client in Model.ClientsList)
+            {
+                <tr data-user-id="@client.Id">
+                    <td>@client.Email</td>
+                    <td>@client.PhoneNumber</td>
+                    <td class="fio-column">@client.FullName</td>
+                    <td>@client.DateCreated.ToString("yyyy-MM-dd")</td>
+                    <!-- Автомобили: кнопка вызывает модалку с iframe -->
+                    <td class="text-center">
+                        <button type="button"
+                                class="btn btn-sm btn-primary btn-show-cars"
+                                data-user-id="@client.Id">
+                            Посмотреть
+                        </button>
+                    </td>
+                    <!-- Действия: Редактировать / Удалить -->
+                    <td class="text-center">
+                        <button type="button"
+                                class="btn btn-sm btn-warning btn-edit-client"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editClientModal"
+                                data-user-id="@client.Id"
+                                data-email="@client.Email"
+                                data-phone="@client.PhoneNumber"
+                                data-fullname="@client.FullName">
+                            Редактировать
+                        </button>
+                        <button type="button"
+                                class="btn btn-sm btn-danger btn-delete-client"
+                                data-user-id="@client.Id"
+                                data-email="@client.Email">
+                            Удалить
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- ======= Модалка: показать автомобили клиента (iframe) ======= -->
+<div class="modal fade" id="carsModal" tabindex="-1" aria-labelledby="carsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" style="max-width:90%">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Автомобили клиента</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- iframe будет загружать страницу через clientId -->
+                <iframe id="carsIframe"
+                        src=""
+                        style="width:100%; height:600px; border:none;">
+                </iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======= Модалка: редактирование клиента ======= -->
+<div class="modal fade" id="editClientModal" tabindex="-1" aria-labelledby="editClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <!-- Добавили asp-page-handler="Edit", чтобы Razor Page автоматически вставил токен -->
+            <form id="editClientForm" method="post" asp-page-handler="Edit">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактировать клиента</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- ValidationSummary для ошибок EditModel -->
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2" id="editValidationError"></div>
+                    <!-- Скрытое поле ID -->
+                    <input type="hidden" asp-for="EditInput.Id" id="edit-Id" />
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label asp-for="EditInput.Email" class="form-label"></label>
+                        <!-- ВАЖНО: задали id="edit-Email" для доступа из JS -->
+                        <input asp-for="EditInput.Email" class="form-control" id="edit-Email" />
+                        <span asp-validation-for="EditInput.Email" class="text-danger"></span>
+                    </div>
+                    <!-- PhoneNumber -->
+                    <div class="mb-3">
+                        <label asp-for="EditInput.PhoneNumber" class="form-label"></label>
+                        <!-- Задали id="edit-PhoneNumber" и maxlength -->
+                        <input asp-for="EditInput.PhoneNumber" class="form-control" id="edit-PhoneNumber"/>
+                        <span asp-validation-for="EditInput.PhoneNumber" class="text-danger"></span>
+                    </div>
+                    <!-- FullName -->
+                    <div class="mb-3">
+                        <label asp-for="EditInput.FullName" class="form-label"></label>
+                        <!-- Задали id="edit-FullName" -->
+                        <input asp-for="EditInput.FullName" class="form-control" id="edit-FullName" />
+                        <span asp-validation-for="EditInput.FullName" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Отмена
+                    </button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ======= Модалка: подтверждение удаления клиента ======= -->
+<div class="modal fade" id="deleteClientModal" tabindex="-1" aria-labelledby="deleteClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Удалить клиента</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить клиента <strong id="deleteClientEmail"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Отмена
+                </button>
+                <button type="button" id="confirmDeleteBtn" class="btn btn-danger">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- jQuery для Inputmask и AJAX -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS (bundle с Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery Inputmask (маска телефона) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Найдём на странице любой скрытый токен Antiforgery
+            var antiforgeryToken = $('input[name="__RequestVerificationToken"]').first().val() || '';
+
+            // ======== 1. Маска для "Добавить клиента" ========
+            var $createPhone = $('#create-PhoneNumber');
+            if ($createPhone.length) {
+                $createPhone.inputmask({
+                    mask: "+7 (999) 999-99-99",
+                    placeholder: "_",
+                    showMaskOnFocus: true,
+                    showMaskOnHover: false,
+                    clearIncomplete: false
+                });
+            }
+
+            // ======== 2. Маска для "Редактировать клиента" ========
+            var $editPhone = $('#edit-PhoneNumber');
+            if ($editPhone.length) {
+                $editPhone.removeAttr('maxlength');
+                $editPhone.inputmask({
+                    mask: "+7 (999) 999-99-99",
+                    placeholder: "_",
+                    showMaskOnFocus: true,
+                    showMaskOnHover: false,
+                    clearIncomplete: false
+                });
+            }
+
+            // ======== 3. Кнопка "Посмотреть автомобили" ========
+            $('.btn-show-cars').on('click', function () {
+                var userId = $(this).data('user-id');
+                var url = '/Identity/Account/Manage/MyCars?clientId=' + encodeURIComponent(userId);
+                $('#carsIframe').attr('src', url);
+
+                var carsModalEl = document.getElementById('carsModal');
+                if (carsModalEl) {
+                    var carsModal = new bootstrap.Modal(carsModalEl);
+                    carsModal.show();
+                }
+            });
+
+            // ======== 4. Заполнение модалки "Редактировать клиента" ========
+            var editModalEl = document.getElementById('editClientModal');
+            if (editModalEl) {
+                editModalEl.addEventListener('show.bs.modal', function (event) {
+                    var btn = event.relatedTarget;
+                    if (!btn) return;
+
+                    var userId = btn.getAttribute('data-user-id');
+                    var email = btn.getAttribute('data-email');
+                    var phoneRaw = btn.getAttribute('data-phone') || "";
+                    var fullname = btn.getAttribute('data-fullname');
+
+                    var idField = document.getElementById('edit-Id');
+                    if (idField) idField.value = userId;
+
+                    var emailField = document.getElementById('edit-Email');
+                    if (emailField) emailField.value = email;
+
+                    var nameField = document.getElementById('edit-FullName');
+                    if (nameField) nameField.value = fullname;
+
+                    var errorDiv = document.getElementById('editValidationError');
+                    if (errorDiv) errorDiv.innerText = '';
+
+                    if ($editPhone.length) {
+                        var digits = phoneRaw.replace(/\D/g, '');
+                        if (digits.length === 11 && digits.charAt(0) === '7') {
+                            digits = digits.substring(1);
+                        }
+                        $editPhone.val('');
+                        $editPhone.val(digits);
+                        $editPhone.trigger('input');
+                    }
+                });
+            }
+
+            // ======== 5. AJAX для "Редактировать клиента" ========
+            var $editForm = $('#editClientForm');
+            if ($editForm.length) {
+                $editForm.on('submit', function (e) {
+                    e.preventDefault();
+                    var form = $(this);
+                    var url = form.attr('action');
+                    var data = form.serialize();
+
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: data,
+                        headers: {
+                            // добавляем токен Antiforgery в заголовок
+                            'RequestVerificationToken': antiforgeryToken
+                        },
+                        success: function () {
+                            location.reload();
+                        },
+                        error: function (xhr) {
+                            var errors = [];
+                            if (xhr.responseJSON) {
+                                if (Array.isArray(xhr.responseJSON)) {
+                                    errors = xhr.responseJSON;
+                                } else if (xhr.responseJSON.errors) {
+                                    for (var key in xhr.responseJSON.errors) {
+                                        if (xhr.responseJSON.errors[key].length) {
+                                            errors = errors.concat(xhr.responseJSON.errors[key]);
+                                        }
+                                    }
+                                }
+                            }
+                            if (!errors.length) {
+                                errors = ["Ошибка при сохранении"];
+                            }
+                            $('#editValidationError').text(errors.join("; "));
+                        }
+                    });
+                });
+            }
+
+            // ======== 6. Открытие модалки "Удалить клиента" ========
+            var deleteUserId = "";
+            $('.btn-delete-client').on('click', function () {
+                deleteUserId = $(this).data('user-id');
+                var email = $(this).data('email');
+                var emailSpan = $('#deleteClientEmail');
+                if (emailSpan.length) {
+                    emailSpan.text(email);
+                }
+
+                var deleteModalEl = document.getElementById('deleteClientModal');
+                if (deleteModalEl) {
+                    var deleteModal = new bootstrap.Modal(deleteModalEl);
+                    deleteModal.show();
+                }
+            });
+
+            // ======== 7. AJAX для подтверждения удаления клиента ========
+            $('#confirmDeleteBtn').on('click', function () {
+                if (!deleteUserId) return;
+                var url = window.location.pathname + '?handler=Delete&id=' + encodeURIComponent(deleteUserId);
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    headers: {
+                        // добавляем тот же токен Antiforgery
+                        'RequestVerificationToken': antiforgeryToken
+                    },
+                    success: function () {
+                        location.reload();
+                    },
+                    error: function () {
+                        alert('Ошибка при удалении клиента');
+                    }
+                });
+            });
+        });
+    </script>
+}

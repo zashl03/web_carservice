@@ -1,0 +1,173 @@
+﻿@page
+@model web_service.Areas.Identity.Pages.Account.Manage.TypeServiceModel
+@{
+    ViewData["Title"] = "Услуги";
+}
+
+<h2>Услуги</h2>
+
+<!-- ================================================
+     1. Форма добавления новой услуги (вверху)
+     ================================================ -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Добавить новую услугу</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" asp-page-handler="Save" id="create-form">
+            <input type="hidden" asp-for="Input.Id" />
+
+            <div class="form-group mb-2">
+                <label asp-for="Input.ServiceName">Название услуги</label>
+                <input asp-for="Input.ServiceName" class="form-control" />
+                <span asp-validation-for="Input.ServiceName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-2">
+                <label asp-for="Input.Description">Описание</label>
+                <textarea asp-for="Input.Description" class="form-control"></textarea>
+                <span asp-validation-for="Input.Description" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-success">Добавить</button>
+        </form>
+    </div>
+</div>
+
+<hr />
+
+<!-- ================================================
+     2. Таблица со списком услуг (ниже формы)
+     ================================================ -->
+<div style="max-height:600px; overflow:auto;">
+    <table class="table table-striped" id="services-table">
+        <thead>
+            <tr>
+                <th>Название услуги</th>
+                <th>Описание</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.ServicesList != null && Model.ServicesList.Count > 0)
+            {
+                foreach (var item in Model.ServicesList)
+                {
+                    <tr data-id="@item.Id">
+                        <td>@item.ServiceName</td>
+                        <td>@item.Description</td>
+                        <td>
+                            <button type="button"
+                                    class="btn btn-sm btn-primary btn-edit"
+                                    data-id="@item.Id">
+                                Редактировать
+                            </button>
+                            <form method="post" asp-page-handler="Delete" style="display:inline;">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Удалить эту услугу?');">
+                                    Удалить
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="3" class="text-center">Нет доступных услуг.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<hr />
+
+<!-- ================================================
+     3. Модальное окно для редактирования
+     ================================================ -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать услугу</h5>
+                @* Крестик убран *@
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-page-handler="Save" id="edit-form">
+                    <input type="hidden" asp-for="Input.Id" id="edit-Id" />
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.ServiceName">Название услуги</label>
+                        <input asp-for="Input.ServiceName" class="form-control" id="edit-ServiceName" />
+                        <span asp-validation-for="Input.ServiceName" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label asp-for="Input.Description">Описание</label>
+                        <textarea asp-for="Input.Description" class="form-control" id="edit-Description"></textarea>
+                        <span asp-validation-for="Input.Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="$('#editModal').modal('hide')">
+                            Отмена
+                        </button>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- jQuery (если в Layout не подключено) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJ+Yy9N4/R+v6QEn6ztX4Sv5K2IdZh9f98tZU="
+            crossorigin="anonymous"></script>
+
+    <!-- Bootstrap 4 bundle (если в Layout не подключено) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-Piv4xVNRyMGpqkYfYfTc+3laZN8exmNQhLo9I5M7uGQ5jOeLO0DnhbxtSi3H2dj"
+            crossorigin="anonymous"></script>
+
+    <script>
+        $(function () {
+            console.log("TypeService: document.ready");
+
+            // При клике «Редактировать» загружаем данные и открываем модалку
+            $(document).on('click', '.btn-edit', function () {
+                var id = $(this).data('id');
+                console.log("Редактировать, id =", id);
+
+                var url = window.location.pathname.replace(/\/$/, "")
+                    + '?handler=ServiceDetails&id=' + id;
+                console.log("AJAX URL:", url);
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (data) {
+                        console.log("AJAX success:", data);
+                        if (data) {
+                            $('#edit-Id').val(data.id);
+                            $('#edit-ServiceName').val(data.serviceName);
+                            $('#edit-Description').val(data.description);
+
+                            $('#editModal').modal('show');
+                        } else {
+                            alert('Данные не найдены.');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("AJAX error:", status, error);
+                        alert('Ошибка при загрузке данных для редактирования.');
+                    }
+                });
+            });
+        });
+    </script>
+}

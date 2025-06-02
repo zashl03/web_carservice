@@ -9,6 +9,6 @@ namespace web_service.Models.Admin
 
         // Новые поля из EmployeeProfile
         public string? TabNumber { get; set; }
-        public string? Department { get; set; }
+        public string? Position { get; set; }
     }
 }

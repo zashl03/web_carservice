@@ -173,6 +173,21 @@ namespace web_service.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("LicencePlate")
+                        .IsRequired()
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)");
+
+                    b.Property<string>("Mileage")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("Model")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -182,6 +197,11 @@ namespace web_service.Migrations
                         .IsRequired()
                         .HasMaxLength(17)
                         .HasColumnType("character varying(17)");
+
+                    b.Property<int?>("Year")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -227,6 +247,9 @@ namespace web_service.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("UserId");
 
                     b.ToTable("ClientProfiles");
@@ -237,7 +260,7 @@ namespace web_service.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("text");
 
-                    b.Property<string>("Department")
+                    b.Property<string>("Position")
                         .HasColumnType("text");
 
                     b.Property<string>("TabNumber")
@@ -327,25 +350,113 @@ namespace web_service.Migrations
                     b.ToTable("PartInStorages");
                 });
 
+            modelBuilder.Entity("web_service.Data.Entities.PartInWorkEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Cost")
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<Guid>("PartId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StorekeeperId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("WorkTaskId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartId");
+
+                    b.HasIndex("StorekeeperId");
+
+                    b.HasIndex("WorkTaskId");
+
+                    b.ToTable("PartInWorks");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.PaymentEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdministratorId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DatePayment")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("FinalCost")
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("PaymentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("WorkOrderId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdministratorId");
+
+                    b.HasIndex("WorkOrderId");
+
+                    b.ToTable("Payments");
+                });
+
             modelBuilder.Entity("web_service.Data.Entities.RecordEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("BookingDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("AdministratorId")
+                        .HasColumnType("text");
 
                     b.Property<Guid>("CarId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Comment")
+                    b.Property<string>("ClientComment")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DateAppointment")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TypeServiceId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("AdministratorId");
+
                     b.HasIndex("CarId");
+
+                    b.HasIndex("TypeServiceId");
 
                     b.ToTable("Records");
                 });
@@ -400,27 +511,126 @@ namespace web_service.Migrations
                     b.ToTable("StorageLocations");
                 });
 
-            modelBuilder.Entity("web_service.Data.Entities.WarehouseEntity", b =>
+            modelBuilder.Entity("web_service.Data.Entities.TypeServiceEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Address")
+                    b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
-                    b.Property<string>("StorekeeperId")
+                    b.Property<string>("ServiceName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StorekeeperId")
+                    b.ToTable("TypeServices");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.WorkEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("Duration")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("WorkName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Works");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.WorkOrderEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("Cost")
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<DateTime>("DateOpened")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RecordId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("WorkOrderNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecordId")
                         .IsUnique();
 
-                    b.ToTable("Warehouses");
+                    b.ToTable("WorkOrders");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.WorkTaskEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("FactCost")
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("MeasureUnit")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("MechanicId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("WorkId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("WorkOrderId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MechanicId");
+
+                    b.HasIndex("WorkId");
+
+                    b.HasIndex("WorkOrderId");
+
+                    b.ToTable("WorkTasks");
                 });
 
             modelBuilder.Entity("web_service.Data.Identity.ApplicationUser", b =>
@@ -615,15 +825,76 @@ namespace web_service.Migrations
                     b.Navigation("StorageLocation");
                 });
 
+            modelBuilder.Entity("web_service.Data.Entities.PartInWorkEntity", b =>
+                {
+                    b.HasOne("web_service.Data.Entities.PartEntity", "Part")
+                        .WithMany()
+                        .HasForeignKey("PartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("web_service.Data.Entities.EmployeeProfile", "Storekeeper")
+                        .WithMany()
+                        .HasForeignKey("StorekeeperId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("web_service.Data.Entities.WorkTaskEntity", "WorkTask")
+                        .WithMany()
+                        .HasForeignKey("WorkTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Part");
+
+                    b.Navigation("Storekeeper");
+
+                    b.Navigation("WorkTask");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.PaymentEntity", b =>
+                {
+                    b.HasOne("web_service.Data.Entities.EmployeeProfile", "Administrator")
+                        .WithMany()
+                        .HasForeignKey("AdministratorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("web_service.Data.Entities.WorkOrderEntity", "WorkOrder")
+                        .WithMany()
+                        .HasForeignKey("WorkOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Administrator");
+
+                    b.Navigation("WorkOrder");
+                });
+
             modelBuilder.Entity("web_service.Data.Entities.RecordEntity", b =>
                 {
+                    b.HasOne("web_service.Data.Entities.EmployeeProfile", "Administrator")
+                        .WithMany()
+                        .HasForeignKey("AdministratorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("web_service.Data.Entities.CarEntity", "Car")
                         .WithMany()
                         .HasForeignKey("CarId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("web_service.Data.Entities.TypeServiceEntity", "TypeService")
+                        .WithMany()
+                        .HasForeignKey("TypeServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Administrator");
+
                     b.Navigation("Car");
+
+                    b.Navigation("TypeService");
                 });
 
             modelBuilder.Entity("web_service.Data.Entities.StorageLocationEntity", b =>
@@ -637,15 +908,40 @@ namespace web_service.Migrations
                     b.Navigation("Storekeeper");
                 });
 
-            modelBuilder.Entity("web_service.Data.Entities.WarehouseEntity", b =>
+            modelBuilder.Entity("web_service.Data.Entities.WorkOrderEntity", b =>
                 {
-                    b.HasOne("web_service.Data.Entities.EmployeeProfile", "Storekeeper")
+                    b.HasOne("web_service.Data.Entities.RecordEntity", "Record")
                         .WithOne()
-                        .HasForeignKey("web_service.Data.Entities.WarehouseEntity", "StorekeeperId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasForeignKey("web_service.Data.Entities.WorkOrderEntity", "RecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Storekeeper");
+                    b.Navigation("Record");
+                });
+
+            modelBuilder.Entity("web_service.Data.Entities.WorkTaskEntity", b =>
+                {
+                    b.HasOne("web_service.Data.Entities.EmployeeProfile", "Mechanic")
+                        .WithMany()
+                        .HasForeignKey("MechanicId");
+
+                    b.HasOne("web_service.Data.Entities.WorkEntity", "Work")
+                        .WithMany()
+                        .HasForeignKey("WorkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("web_service.Data.Entities.WorkOrderEntity", "WorkOrder")
+                        .WithMany()
+                        .HasForeignKey("WorkOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Mechanic");
+
+                    b.Navigation("Work");
+
+                    b.Navigation("WorkOrder");
                 });
 
             modelBuilder.Entity("web_service.Data.Entities.CategoryPartEntity", b =>

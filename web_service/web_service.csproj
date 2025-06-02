@@ -9,7 +9,15 @@
 
   <ItemGroup>
     <Compile Remove="Areas\Identity\Pages\Account\Manage\Warehouses.cshtml.cs" />
+    <Compile Remove="Controllers\CarController.cs" />
+    <Compile Remove="Controllers\RecordContoller.cs" />
+    <Compile Remove="Data\Entities\WarehouseEntity.cs" />
+    <Compile Remove="Mappings\DomainToEntityProfile.cs" />
+    <Compile Remove="Services\CarService.cs" />
+    <Compile Remove="Services\ICarService.cs" />
+    <Compile Remove="Services\IRecordService.cs" />
     <Compile Remove="Services\IWarehouseService.cs" />
+    <Compile Remove="Services\RecordService.cs" />
     <Compile Remove="Services\WarehouseService.cs" />
   </ItemGroup>
 
@@ -27,5 +35,14 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.15" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Mappings\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Areas\Identity\Pages\Account\Manage\Clients.cshtml" />
   </ItemGroup>
 </Project>

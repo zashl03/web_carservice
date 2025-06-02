@@ -1,105 +1,323 @@
-/*
- * Razor Page для управления автомобилями в личном кабинете пользователя.
- * Обеспечивает:
- * - Просмотр списка привязанных автомобилей
- * - Добавление новых автомобилей через форму
- * - Интеграцию с профилем клиента (автосоздание при отсутствии)
- * Доступна только авторизованным пользователям
- */
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using web_service.Data;
-using web_service.Data.Identity;
-using web_service.Domain.Entities;
-using web_service.Models.Car;
-using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
 using web_service.Data.Entities;
+using web_service.Data.Identity;
 
 namespace web_service.Areas.Identity.Pages.Account.Manage
 {
-    [Authorize]  // Требуется авторизация любого типа
+    [Area("Identity")]
+    [Authorize] // Доступна любому аутентифицированному клиенту и администратору
     public class MyCarsModel : PageModel
     {
-        private readonly ICarService _carService;      // Сервис для работы с автомобилями
-        private readonly ApplicationDbContext _context; // Контекст БД для прямых запросов
-        private readonly UserManager<ApplicationUser> _userManager; // Менеджер пользователей
-        private readonly IMapper _mapper;              // Преобразователь моделей
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        [BindProperty]                                 // Привязка модели из формы POST
-        public AddCarViewModel Input { get; set; }     // Модель данных для добавления авто
-
-        // Список автомобилей для отображения в таблице
-        public IEnumerable<CarViewModel> Cars { get; set; } = new List<CarViewModel>();
-
-        public MyCarsModel(
-            ICarService carService,
-            ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager,
-            IMapper mapper)
+        public MyCarsModel(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
-            // Инициализация зависимостей, переданных через DI
-            _carService = carService;
             _context = context;
             _userManager = userManager;
-            _mapper = mapper;
         }
 
-        // Обработка GET-запроса (загрузка страницы)
+        // Список машин для отображения
+        public IList<CarEntity> MyCars { get; set; } = new List<CarEntity>();
+
+        // Модель для формы создания/редактирования
+        [BindProperty]
+        public CarInputModel Input { get; set; }
+
+        // Если админ просматривает чужие автомобили, сюда придёт userId клиента
+        [BindProperty(SupportsGet = true)]
+        public string? ClientId { get; set; }
+
+        public class CarInputModel
+        {
+            public Guid? Id { get; set; } // null или Guid.Empty => новая машина
+
+            [Required]
+            [StringLength(17, MinimumLength = 17, ErrorMessage = "VIN должен состоять ровно из 17 символов.")]
+            [RegularExpression(@"[A-HJ-NPR-Z0-9]{17}", ErrorMessage = "VIN может содержать только буквы (кроме I, O, Q) и цифры.")]
+            [Display(Name = "VIN")]
+            public string VIN { get; set; }
+
+            [Required]
+            [StringLength(9, MinimumLength = 7, ErrorMessage = "Номерной знак должен быть длиной от 7 до 9 символов.")]
+            [Display(Name = "Номерной знак")]
+            public string LicencePlate { get; set; }
+
+            [Required, MaxLength(50)]
+            [Display(Name = "Марка")]
+            public string Brand { get; set; }
+
+            [Required, MaxLength(50)]
+            [Display(Name = "Модель")]
+            public string Model { get; set; }
+
+            [Required, MaxLength(50)]
+            [Display(Name = "Пробег")]
+            public string Mileage { get; set; }
+
+            [Required]
+            [Range(1900, 2100, ErrorMessage = "Год должен быть в диапазоне 1900–2100.")]
+            [Display(Name = "Год выпуска")]
+            public int Year { get; set; }
+
+            [Required, MaxLength(50)]
+            [Display(Name = "Цвет")]
+            public string Color { get; set; }
+        }
+
+        // GET: загрузка страницы
         public async Task<IActionResult> OnGetAsync()
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return RedirectToPage("/Account/Login"); // Редирект, если пользователь не авторизован
-            }
-
-            // Поиск профиля клиента с привязанными автомобилями
-            var clientProfile = await _context.ClientProfiles
-                .Include(c => c.Cars)  // Жадная загрузка автомобилей
-                .FirstOrDefaultAsync(c => c.UserId == user.Id);
-
-            // Автосоздание профиля при первом входе
-            if (clientProfile == null)
-            {
-                clientProfile = new ClientProfile { UserId = user.Id };
-                _context.ClientProfiles.Add(clientProfile);
-                await _context.SaveChangesAsync();  // Сохраняем новый профиль
-            }
-
-            // Маппинг Entity -> ViewModel для отображения
-            Cars = _mapper.Map<IEnumerable<CarViewModel>>(clientProfile.Cars);
+            await PopulateMyCarsAsync();
             return Page();
         }
 
-        // Обработка POST-запроса (добавление автомобиля)
-        public async Task<IActionResult> OnPostAsync()
+        // POST: сохранить (создать или редактировать)
+        public async Task<IActionResult> OnPostSaveAsync()
         {
             if (!ModelState.IsValid)
             {
-                return Page();  // Возврат формы с ошибками валидации
-            }
-
-            try
-            {
-                var user = await _userManager.GetUserAsync(User);
-                var clientProfile = await _context.ClientProfiles
-                    .FirstOrDefaultAsync(c => c.UserId == user.Id);
-
-                var car = _mapper.Map<Car>(Input);  // Преобразование DTO -> Domain Model
-                await _carService.AddCarAsync(car, clientProfile.UserId);
-
-                TempData["StatusMessage"] = "Автомобиль добавлен!"; // Сообщение об успехе
-                return RedirectToPage();  // Паттерн POST-REDIRECT-GET
-            }
-            catch (Exception ex)  // Обработка ошибок из сервиса
-            {
-                ModelState.AddModelError("", ex.Message);
-                await OnGetAsync();  // Перезагрузка списка автомобилей
+                await PopulateMyCarsAsync();
                 return Page();
             }
+
+            // Вычисляем userId, для которого выполняем операцию (админ может смотреть чужие)
+            string userIdToUse;
+            if (User.IsInRole("Administrator") && !string.IsNullOrEmpty(ClientId))
+            {
+                userIdToUse = ClientId!;
+            }
+            else
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                    return Challenge();
+                userIdToUse = currentUser.Id;
+            }
+
+            // Получаем профиль клиента по userIdToUse
+            var clientProfile = await _context.ClientProfiles
+                .FirstOrDefaultAsync(cp => cp.UserId == userIdToUse);
+            if (clientProfile == null)
+            {
+                ModelState.AddModelError("", "Профиль клиента не найден.");
+                await PopulateMyCarsAsync();
+                return Page();
+            }
+
+            // Сколько уже машин у этого клиента?
+            var existingCount = await _context.Cars
+                .CountAsync(c => c.ClientProfileId == clientProfile.UserId);
+
+            if (Input.Id == null || Input.Id == Guid.Empty)
+            {
+                // Создаём новую машину
+                if (existingCount >= 10)
+                {
+                    ModelState.AddModelError("", "Нельзя добавить более 10 автомобилей.");
+                    await PopulateMyCarsAsync();
+                    return Page();
+                }
+
+                // Проверяем уникальность VIN и номерного знака среди всех машин
+                bool vinExists = await _context.Cars.AnyAsync(c => c.VIN == Input.VIN);
+                if (vinExists)
+                {
+                    ModelState.AddModelError("Input.VIN", "Автомобиль с таким VIN уже существует.");
+                    await PopulateMyCarsAsync();
+                    return Page();
+                }
+
+                bool plateExists = await _context.Cars.AnyAsync(c => c.LicencePlate == Input.LicencePlate);
+                if (plateExists)
+                {
+                    ModelState.AddModelError("Input.LicencePlate", "Автомобиль с таким номерным знаком уже существует.");
+                    await PopulateMyCarsAsync();
+                    return Page();
+                }
+
+                var newCar = new CarEntity
+                {
+                    Id = Guid.NewGuid(),
+                    VIN = Input.VIN,
+                    LicencePlate = Input.LicencePlate,
+                    Brand = Input.Brand,
+                    Model = Input.Model,
+                    Mileage = Input.Mileage,
+                    Year = Input.Year,
+                    Color = Input.Color,
+                    ClientProfileId = clientProfile.UserId
+                };
+
+                _context.Cars.Add(newCar);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // Редактируем существующую машину
+                var existingCar = await _context.Cars
+                    .FirstOrDefaultAsync(c =>
+                        c.Id == Input.Id.Value &&
+                        c.ClientProfileId == clientProfile.UserId);
+
+                if (existingCar == null)
+                {
+                    return NotFound();
+                }
+
+                // Проверяем, что VIN и номерной знак уникальны среди других машин
+                bool vinExists = await _context.Cars
+                    .AnyAsync(c => c.VIN == Input.VIN && c.Id != existingCar.Id);
+                if (vinExists)
+                {
+                    ModelState.AddModelError("Input.VIN", "Другой автомобиль с таким VIN уже существует.");
+                    await PopulateMyCarsAsync();
+                    return Page();
+                }
+
+                bool plateExists = await _context.Cars
+                    .AnyAsync(c => c.LicencePlate == Input.LicencePlate && c.Id != existingCar.Id);
+                if (plateExists)
+                {
+                    ModelState.AddModelError("Input.LicencePlate", "Другой автомобиль с таким номерным знаком уже существует.");
+                    await PopulateMyCarsAsync();
+                    return Page();
+                }
+
+                // Обновляем поля
+                existingCar.VIN = Input.VIN;
+                existingCar.LicencePlate = Input.LicencePlate;
+                existingCar.Brand = Input.Brand;
+                existingCar.Model = Input.Model;
+                existingCar.Mileage = Input.Mileage;
+                existingCar.Year = Input.Year;
+                existingCar.Color = Input.Color;
+
+                _context.Cars.Update(existingCar);
+                await _context.SaveChangesAsync();
+            }
+
+            // После сохранения возвращаемся на эту же страницу, сохраняя ClientId в query
+            if (User.IsInRole("Administrator") && !string.IsNullOrEmpty(ClientId))
+            {
+                return RedirectToPage(new { ClientId = ClientId });
+            }
+            else
+            {
+                return RedirectToPage();
+            }
+        }
+
+        // POST: удалить машину
+        public async Task<IActionResult> OnPostDeleteAsync(Guid id)
+        {
+            // Вычисляем userId, для которого удаляем (админ может удалять чужие)
+            string userIdToUse;
+            if (User.IsInRole("Administrator") && !string.IsNullOrEmpty(ClientId))
+            {
+                userIdToUse = ClientId!;
+            }
+            else
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                    return Challenge();
+                userIdToUse = currentUser.Id;
+            }
+
+            // Получаем клиентский профиль
+            var clientProfile = await _context.ClientProfiles
+                .FirstOrDefaultAsync(cp => cp.UserId == userIdToUse);
+            if (clientProfile == null)
+                return Challenge();
+
+            // Находим машину, принадлежащую именно этому клиенту
+            var car = await _context.Cars
+                .FirstOrDefaultAsync(c => c.Id == id && c.ClientProfileId == clientProfile.UserId);
+
+            if (car != null)
+            {
+                _context.Cars.Remove(car);
+                await _context.SaveChangesAsync();
+            }
+
+            // После удаления возвращаемся на эту же страницу, сохраняя ClientId
+            if (User.IsInRole("Administrator") && !string.IsNullOrEmpty(ClientId))
+            {
+                return RedirectToPage(new { ClientId = ClientId });
+            }
+            else
+            {
+                return RedirectToPage();
+            }
+        }
+
+        // AJAX GET: получить данные одной машины
+        public async Task<JsonResult> OnGetCarDetailsAsync(Guid id)
+        {
+            var car = await _context.Cars
+                .Where(c => c.Id == id)
+                .Select(c => new
+                {
+                    id = c.Id,
+                    vin = c.VIN,
+                    licencePlate = c.LicencePlate,
+                    brand = c.Brand,
+                    model = c.Model,
+                    mileage = c.Mileage,
+                    year = c.Year,
+                    color = c.Color
+                })
+                .FirstOrDefaultAsync();
+
+            if (car == null)
+                return new JsonResult(null);
+
+            return new JsonResult(car);
+        }
+
+        // Вспомогательный метод: заполняет MyCars (админ или клиент)
+        private async Task PopulateMyCarsAsync()
+        {
+            string userIdToUse;
+
+            if (User.IsInRole("Administrator") && !string.IsNullOrEmpty(ClientId))
+            {
+                userIdToUse = ClientId!;
+            }
+            else
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                {
+                    MyCars = new List<CarEntity>();
+                    return;
+                }
+                userIdToUse = currentUser.Id;
+            }
+
+            var clientProfile = await _context.ClientProfiles
+                .FirstOrDefaultAsync(cp => cp.UserId == userIdToUse);
+            if (clientProfile == null)
+            {
+                MyCars = new List<CarEntity>();
+                return;
+            }
+
+            MyCars = await _context.Cars
+                .Where(c => c.ClientProfileId == clientProfile.UserId)
+                .OrderBy(c => c.LicencePlate)
+                .ToListAsync();
         }
     }
 }

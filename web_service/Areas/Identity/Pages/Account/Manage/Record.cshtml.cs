@@ -1,166 +1,236 @@
+п»їusing System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 using web_service.Data;
-using web_service.Data.Identity;
 using web_service.Data.Entities;
-using web_service.Models.Record;
-using web_service.Services;
-using System.ComponentModel.DataAnnotations;
+using web_service.Data.Identity;
+using Microsoft.AspNetCore.Identity;
 
 namespace web_service.Areas.Identity.Pages.Account.Manage
 {
-    [Authorize(Roles = "Client")]
+    [Area("Identity")]
+    [Authorize] // Р”РѕСЃС‚СѓРїРЅР° Р»СЋР±РѕРјСѓ Р°СѓС‚РµРЅС‚РёС„РёС†РёСЂРѕРІР°РЅРЅРѕРјСѓ РєР»РёРµРЅС‚Сѓ
     public class RecordModel : PageModel
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ICarService _carService;
-        private readonly ILogger<RecordModel> _logger;
 
-        public RecordModel(
-            ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager,
-            ICarService carService,
-            ILogger<RecordModel> logger)
+        public RecordModel(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
-            _carService = carService;
-            _logger = logger;
         }
 
+        // РЎРїРёСЃРѕРє РјР°С€РёРЅ РєР»РёРµРЅС‚Р° (РґР»СЏ РІС‹РїР°РґР°СЋС‰РµРіРѕ СЃРїРёСЃРєР°)
+        public SelectList CarSelectList { get; set; }
+
+        // РЎРїРёСЃРѕРє СѓСЃР»СѓРі (РґР»СЏ РІС‹РїР°РґР°СЋС‰РµРіРѕ СЃРїРёСЃРєР°)
+        public SelectList ServiceSelectList { get; set; }
+
+        // РЎРїРёСЃРѕРє РІСЃРµС… Р·Р°СЏРІРѕРє СЌС‚РѕРіРѕ РєР»РёРµРЅС‚Р°
+        public IList<RecordEntity> MyRecords { get; set; }
+
+        // РњРѕРґРµР»СЊ РґР»СЏ С„РѕСЂРјС‹ (СЃРѕР·РґР°С‚СЊ/СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ)
         [BindProperty]
-        public RecordInputModel Input { get; set; } = new();
+        public RecordInputModel Input { get; set; }
 
-        public List<RecordViewModel> Records { get; set; } = new();
+        public class RecordInputModel
+        {
+            // Р•СЃР»Рё Id != null, СЌС‚Рѕ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ
+            public Guid? Id { get; set; }
 
+            [Required]
+            [DataType(DataType.Date)]
+            [Display(Name = "Р”Р°С‚Р° РїСЂРёС‘РјР°")]
+            public DateTime DateAppointment { get; set; }
+
+            [MaxLength(500)]
+            [Display(Name = "РљРѕРјРјРµРЅС‚Р°СЂРёР№ РєР»РёРµРЅС‚Р°")]
+            public string? ClientComment { get; set; }
+
+            [Required(ErrorMessage = "Р’С‹Р±РµСЂРёС‚Рµ Р°РІС‚РѕРјРѕР±РёР»СЊ")]
+            [Display(Name = "РђРІС‚РѕРјРѕР±РёР»СЊ")]
+            public Guid CarId { get; set; }
+
+            [Required(ErrorMessage = "Р’С‹Р±РµСЂРёС‚Рµ СѓСЃР»СѓРіСѓ")]
+            [Display(Name = "РЈСЃР»СѓРіР°")]
+            public Guid TypeServiceId { get; set; }
+        }
+
+        // GET: РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РґР°РЅРЅС‹С…
         public async Task<IActionResult> OnGetAsync()
         {
-            await LoadDataAsync();
+            await PopulateSelectListsAsync();
+            await PopulateMyRecordsAsync();
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        // POST: СЃРѕС…СЂР°РЅРµРЅРёРµ (СЃРѕР·РґР°РЅРёРµ РёР»Рё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ)
+        public async Task<IActionResult> OnPostSaveAsync()
         {
             if (!ModelState.IsValid)
             {
-                await LoadDataAsync();
+                await PopulateSelectListsAsync();
+                await PopulateMyRecordsAsync();
                 return Page();
             }
 
-            try
+            // Р’Р°Р»РёРґР°С†РёСЏ РґР°С‚С‹ вЂ” РЅРµ РІ РїСЂРѕС€Р»РѕРј
+            if (Input.DateAppointment < DateTime.UtcNow.Date)
             {
-                var user = await GetCurrentUserAsync();
-                // проверка принадлежности автомобиля через CarService
-                var cars = await _carService.GetCarsByOwnerAsync(user.Id);
-                if (!cars.Any(c => c.Id == Input.SelectedCarId))
-                    throw new ValidationException("Выбранный автомобиль не найден");
-
-                var recordEntity = new RecordEntity
-                {
-                    Id = Guid.NewGuid(),
-                    CarId = Input.SelectedCarId,
-                    BookingDate = DateTime.SpecifyKind(Input.BookingDate, DateTimeKind.Utc),
-                    Comment = Input.Comment
-                };
-
-                _context.Records.Add(recordEntity);
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = "Запись успешно создана!";
-                return RedirectToPage();
-            }
-            catch (ValidationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                await LoadDataAsync();
+                ModelState.AddModelError("Input.DateAppointment", "Р”Р°С‚Р° РїСЂРёС‘РјР° РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ СЂР°РЅСЊС€Рµ СЃРµРіРѕРґРЅСЏС€РЅРµР№.");
+                await PopulateSelectListsAsync();
+                await PopulateMyRecordsAsync();
                 return Page();
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Ошибка при создании записи");
-                ModelState.AddModelError(string.Empty, "Произошла ошибка при сохранении");
-                await LoadDataAsync();
-                return Page();
-            }
-        }
 
-        private async Task LoadDataAsync()
-        {
-            var user = await GetCurrentUserAsync();
-
-            // Загрузка списка автомобилей через CarService
-            var cars = await _carService.GetCarsByOwnerAsync(user.Id);
-            Input.Cars = cars.Select(c => new SelectListItem
-            {
-                Value = c.Id.ToString(),
-                Text = $"{c.Brand} {c.Model} ({c.VIN})"
-            }).ToList();
-
-            // Загрузка записей на обслуживание клиента
-            Records = await _context.Records
-                .Include(r => r.Car)
-                .Where(r => r.Car.ClientProfileId == user.Id)
-                .OrderByDescending(r => r.BookingDate)
-                .Select(r => new RecordViewModel
-                {
-                    Id = r.Id,
-                    CarDisplay = $"{r.Car.Brand} {r.Car.Model} ({r.Car.VIN})",
-                    BookingDate = r.BookingDate,
-                    Comment = r.Comment
-                })
-                .ToListAsync();
-        }
-
-        private async Task<ApplicationUser> GetCurrentUserAsync()
-        {
+            // РџРѕР»СѓС‡Р°РµРј С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
+                return Challenge();
+
+            // РџСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ РІС‹Р±СЂР°РЅРЅС‹Р№ CarId РґРµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ РїСЂРёРЅР°РґР»РµР¶РёС‚ СЌС‚РѕРјСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ
+            var car = await _context.Cars
+                .FirstOrDefaultAsync(c => c.Id == Input.CarId && c.ClientProfileId == user.Id);
+
+            if (car == null)
             {
-                throw new ValidationException("Пользователь не найден");
+                ModelState.AddModelError("Input.CarId", "РќРµРІРµСЂРЅС‹Р№ Р°РІС‚РѕРјРѕР±РёР»СЊ.");
+                await PopulateSelectListsAsync();
+                await PopulateMyRecordsAsync();
+                return Page();
             }
-            return user;
+
+            // Р•СЃР»Рё Input.Id == null в†’ СЃРѕР·РґР°С‘Рј РЅРѕРІСѓСЋ Р·Р°СЏРІРєСѓ
+            if (Input.Id == null || Input.Id == Guid.Empty)
+            {
+                var newRecord = new RecordEntity
+                {
+                    Id = Guid.NewGuid(),
+                    Status = "New", // СЃС‚Р°С‚СѓСЃ В«РЎРѕР·РґР°РЅР°В»
+                    DateAppointment = DateTime.SpecifyKind(Input.DateAppointment, DateTimeKind.Utc),
+                    ClientComment = Input.ClientComment,
+                    RejectReason = null,
+                    CarId = car.Id,
+                    AdministratorId = null, // РїРѕРєР° РЅРµ РЅР°Р·РЅР°С‡РµРЅ
+                    TypeServiceId = Input.TypeServiceId,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.Records.Add(newRecord);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // Р РµРґР°РєС‚РёСЂСѓРµРј СЃСѓС‰РµСЃС‚РІСѓСЋС‰СѓСЋ Р·Р°СЏРІРєСѓ
+                var existing = await _context.Records.FindAsync(Input.Id.Value);
+                if (existing == null)
+                {
+                    return NotFound();
+                }
+
+                // Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ РµСЃР»Рё СЃС‚Р°С‚СѓСЃ = "New"
+                if (existing.Status != "New")
+                {
+                    ModelState.AddModelError(string.Empty, "Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ Р·Р°СЏРІРєСѓ РІ СЃС‚Р°С‚СѓСЃРµ В«РЎРѕР·РґР°РЅР°В».");
+                    await PopulateSelectListsAsync();
+                    await PopulateMyRecordsAsync();
+                    return Page();
+                }
+
+                existing.DateAppointment = DateTime.SpecifyKind(Input.DateAppointment, DateTimeKind.Utc);
+                existing.ClientComment = Input.ClientComment;
+                existing.CarId = Input.CarId;
+                existing.TypeServiceId = Input.TypeServiceId;
+                // РЎС‚Р°С‚СѓСЃ РѕСЃС‚Р°РІР»СЏРµРј В«NewВ», AdministratorId Рё RejectReason РЅРµ РјРµРЅСЏРµРј
+
+                _context.Records.Update(existing);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToPage();
         }
-    }
 
-    public class RecordInputModel
-    {
-        [Required(ErrorMessage = "Выберите автомобиль")]
-        [Display(Name = "Автомобиль")]
-        public Guid SelectedCarId { get; set; }
-
-        [Required(ErrorMessage = "Укажите дату и время")]
-        [Display(Name = "Дата и время")]
-        [DataType(DataType.DateTime)]
-        [DateAfterYesterday(ErrorMessage = "Дата должна быть позже вчерашнего дня")]
-        public DateTime BookingDate { get; set; } = DateTime.Now.AddHours(1);
-
-        [StringLength(500, ErrorMessage = "Комментарий не должен превышать 500 символов")]
-        [Display(Name = "Комментарий")]
-        public string? Comment { get; set; }
-
-        // Список автомобилей для выбора в форме
-        public List<SelectListItem> Cars { get; set; } = new();
-    }
-
-    /// <summary>
-    /// Валидирует, что дата записи в будущем.
-    /// </summary>
-    public class FutureDateAttribute : ValidationAttribute
-    {
-        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+        // POST: СѓРґР°Р»РµРЅРёРµ Р·Р°СЏРІРєРё (РѕС‚РјРµРЅРёС‚СЊ)
+        public async Task<IActionResult> OnPostDeleteAsync(Guid id)
         {
-            if (value is DateTime date)
+            var record = await _context.Records
+                .Include(r => r.Car)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (record != null)
             {
-                return date > DateTime.Now
-                    ? ValidationResult.Success
-                    : new ValidationResult(ErrorMessage ?? "Дата должна быть в будущем");
+                // РњРѕР¶РЅРѕ СѓРґР°Р»СЏС‚СЊ С‚РѕР»СЊРєРѕ РµСЃР»Рё СЃС‚Р°С‚СѓСЃ = "New"
+                if (record.Status == "New")
+                {
+                    _context.Records.Remove(record);
+                    await _context.SaveChangesAsync();
+                }
             }
-            return new ValidationResult("Некорректный формат даты");
+
+            return RedirectToPage();
+        }
+
+        // AJAX GET: РґРµС‚Р°Р»Рё Р·Р°СЏРІРєРё РґР»СЏ РјРѕРґР°Р»СЊРЅРѕРіРѕ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
+        public async Task<JsonResult> OnGetRecordDetailsAsync(Guid id)
+        {
+            var record = await _context.Records
+                .Where(r => r.Id == id)
+                .Select(r => new
+                {
+                    id = r.Id,
+                    dateAppointment = r.DateAppointment.ToString("yyyy-MM-dd"),
+                    clientComment = r.ClientComment,
+                    carId = r.CarId,
+                    typeServiceId = r.TypeServiceId
+                })
+                .FirstOrDefaultAsync();
+
+            if (record == null)
+                return new JsonResult(null);
+
+            return new JsonResult(record);
+        }
+
+        // Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Р№ РјРµС‚РѕРґ: Р·Р°РїРѕР»РЅСЏРµС‚ CarSelectList Рё ServiceSelectList
+        private async Task PopulateSelectListsAsync()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            // РњР°С€РёРЅС‹ РєР»РёРµРЅС‚Р°
+            var myCars = await _context.Cars
+                             .Where(c => c.ClientProfileId == user.Id)
+                             .OrderBy(c => c.LicencePlate)
+                             .ToListAsync();
+
+            CarSelectList = new SelectList(myCars, nameof(CarEntity.Id), nameof(CarEntity.LicencePlate));
+
+            // РЈСЃР»СѓРіРё
+            var services = await _context.TypeServices
+                                .OrderBy(s => s.ServiceName)
+                                .ToListAsync();
+
+            ServiceSelectList = new SelectList(services, nameof(TypeServiceEntity.Id), nameof(TypeServiceEntity.ServiceName));
+        }
+
+        // Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Р№ РјРµС‚РѕРґ: Р·Р°РїРѕР»РЅСЏРµС‚ MyRecords
+        private async Task PopulateMyRecordsAsync()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            MyRecords = await _context.Records
+                .Include(r => r.Car)
+                .Include(r => r.TypeService)
+                .Where(r => r.Car.ClientProfileId == user.Id)
+                .OrderByDescending(r => r.DateAppointment)
+                .ToListAsync();
         }
     }
 }

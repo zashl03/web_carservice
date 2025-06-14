@@ -20,3 +20,15 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.select2-container .select2-selection--single {
+    height: calc(2.25rem + 2px) !important;
+}
+/* Центрируем текст по вертикали внутри селект2 */
+.select2-container .select2-selection__rendered {
+    line-height: calc(2.25rem + 2px) !important;
+}
+/* Сама стрелочка-иконка тоже подгоняется под эту высоту */
+.select2-container .select2-selection__arrow {
+    height: calc(2.25rem + 2px) !important;
+}

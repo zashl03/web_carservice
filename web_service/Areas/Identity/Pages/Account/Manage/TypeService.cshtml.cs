@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,10 +23,10 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             _context = context;
         }
 
-        // Список всех услуг для таблицы
+        // РЎРїРёСЃРѕРє РІСЃРµС… СѓСЃР»СѓРі РґР»СЏ С‚Р°Р±Р»РёС†С‹
         public IList<TypeServiceEntity> ServicesList { get; set; }
 
-        // Модель для формы (добавление/редактирование)
+        // РњРѕРґРµР»СЊ РґР»СЏ С„РѕСЂРјС‹ (РґРѕР±Р°РІР»РµРЅРёРµ/СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ)
         [BindProperty]
         public ServiceInputModel Input { get; set; }
 
@@ -41,14 +41,14 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             public string Description { get; set; }
         }
 
-        // GET: заполнение списка
+        // GET: Р·Р°РїРѕР»РЅРµРЅРёРµ СЃРїРёСЃРєР°
         public async Task<IActionResult> OnGetAsync()
         {
             await PopulateServicesListAsync();
             return Page();
         }
 
-        // POST: добавить или редактировать
+        // POST: РґРѕР±Р°РІРёС‚СЊ РёР»Рё СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ
         public async Task<IActionResult> OnPostSaveAsync()
         {
             if (!ModelState.IsValid)
@@ -59,7 +59,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
 
             if (Input.Id == null || Input.Id == Guid.Empty)
             {
-                // создаём новую запись
+                // СЃРѕР·РґР°С‘Рј РЅРѕРІСѓСЋ Р·Р°РїРёСЃСЊ
                 var newService = new TypeServiceEntity
                 {
                     Id = Guid.NewGuid(),
@@ -71,7 +71,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             }
             else
             {
-                // редактируем существующую
+                // СЂРµРґР°РєС‚РёСЂСѓРµРј СЃСѓС‰РµСЃС‚РІСѓСЋС‰СѓСЋ
                 var existing = await _context.TypeServices.FindAsync(Input.Id.Value);
                 if (existing == null)
                 {
@@ -87,7 +87,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return RedirectToPage();
         }
 
-        // POST: удалить
+        // POST: СѓРґР°Р»РёС‚СЊ
         public async Task<IActionResult> OnPostDeleteAsync(Guid id)
         {
             var toDelete = await _context.TypeServices.FindAsync(id);
@@ -99,7 +99,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return RedirectToPage();
         }
 
-        // AJAX GET: детали для редактирования
+        // AJAX GET: РґРµС‚Р°Р»Рё РґР»СЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
         public async Task<JsonResult> OnGetServiceDetailsAsync(Guid id)
         {
             var service = await _context.TypeServices
@@ -118,7 +118,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return new JsonResult(service);
         }
 
-        // Вспомогательный метод: заполняет ServicesList
+        // Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Р№ РјРµС‚РѕРґ: Р·Р°РїРѕР»РЅСЏРµС‚ ServicesList
         private async Task PopulateServicesListAsync()
         {
             ServicesList = await _context.TypeServices

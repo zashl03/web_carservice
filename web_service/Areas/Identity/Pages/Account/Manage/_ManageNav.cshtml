@@ -1,4 +1,4 @@
-﻿@using web_service.Data.Identity
+﻿﻿@using web_service.Data.Identity
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
@@ -15,21 +15,21 @@
 <ul class="nav nav-pills flex-column">
     <li class="nav-item">
         <a class="nav-link @ManageNavPages.IndexNavClass(ViewContext)"
-           asp-area="Identity"
+           asp-area="Identity" id="profile"
            asp-page="/Account/Manage/Index">
             Профиль
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link @ManageNavPages.EmailNavClass(ViewContext)"
-           asp-area="Identity"
+           asp-area="Identity" id="email"
            asp-page="/Account/Manage/Email">
             Email
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link @ManageNavPages.ChangePasswordNavClass(ViewContext)"
-           asp-area="Identity"
+           asp-area="Identity" id="change-password"
            asp-page="/Account/Manage/ChangePassword">
             Пароль
         </a>
@@ -153,7 +153,7 @@
             </a>
         </li>
     }
-    
+
 
     @if (hasExternalLogins)
     {
@@ -167,7 +167,7 @@
     }
     <li class="nav-item">
         <a class="nav-link @ManageNavPages.PersonalDataNavClass(ViewContext)"
-           asp-area="Identity"
+           asp-area="Identity" id="personal-data"
            asp-page="/Account/Manage/PersonalData">
             Персональные данные
         </a>

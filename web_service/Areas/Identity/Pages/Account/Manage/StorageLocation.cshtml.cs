@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+ï»¿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -39,8 +39,8 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             [Required] public int Shelf { get; set; }
             [Required] public int Cell { get; set; }
 
-            [Required(ErrorMessage = "Êëàäîâùèê îáÿçàòåëåí")]
-            public string StorekeeperId { get; set; }  // UserId èç EmployeeProfile (string)
+            [Required(ErrorMessage = "ÐšÐ»Ð°Ð´Ð¾Ð²Ñ‰Ð¸Ðº Ð¾Ð±ÑÐ·Ð°Ñ‚ÐµÐ»ÐµÐ½")]
+            public string StorekeeperId { get; set; }  // UserId Ð¸Ð· EmployeeProfile (string)
         }
 
         [BindProperty]
@@ -90,13 +90,13 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            // Ïðîâåðÿåì, ÷òî ïðîôèëü êëàäîâùèêà ñóùåñòâóåò
+            // ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼, Ñ‡Ñ‚Ð¾ Ð¿Ñ€Ð¾Ñ„Ð¸Ð»ÑŒ ÐºÐ»Ð°Ð´Ð¾Ð²Ñ‰Ð¸ÐºÐ° ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÐµÑ‚
             var profileExists = await _context.EmployeeProfiles
                 .AsNoTracking()
                 .AnyAsync(ep => ep.UserId == Input.StorekeeperId);
             if (!profileExists)
             {
-                ModelState.AddModelError(nameof(Input.StorekeeperId), "Ïðîôèëü êëàäîâùèêà íå íàéäåí");
+                ModelState.AddModelError(nameof(Input.StorekeeperId), "ÐŸÑ€Ð¾Ñ„Ð¸Ð»ÑŒ ÐºÐ»Ð°Ð´Ð¾Ð²Ñ‰Ð¸ÐºÐ° Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½");
                 await LoadDataAsync();
                 await PopulateStorekeeperOptionsAsync();
                 return Page();
@@ -165,10 +165,10 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
 
         private async Task PopulateStorekeeperOptionsAsync()
         {
-            // Ïîëó÷àåì âñåõ ïîëüçîâàòåëåé â ðîëè Storekeeper
+            // ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ Ð²ÑÐµÑ… Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÐµÐ¹ Ð² Ñ€Ð¾Ð»Ð¸ Storekeeper
             var storekeepers = await _userManager.GetUsersInRoleAsync("Storekeeper");
 
-            // Çàòåì âûáèðàåì èõ ïðîôèëè
+            // Ð—Ð°Ñ‚ÐµÐ¼ Ð²Ñ‹Ð±Ð¸Ñ€Ð°ÐµÐ¼ Ð¸Ñ… Ð¿Ñ€Ð¾Ñ„Ð¸Ð»Ð¸
             var profiles = await _context.EmployeeProfiles
                 .Include(ep => ep.User)
                 .Where(ep => storekeepers.Select(u => u.Id).Contains(ep.UserId))

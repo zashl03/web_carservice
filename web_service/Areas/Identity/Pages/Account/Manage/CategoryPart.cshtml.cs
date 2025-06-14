@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -17,13 +17,13 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
     public class CategoryPartModel : PageModel
     {
         private readonly ApplicationDbContext _context;
-
         public CategoryPartModel(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        public List<CategoryPartEntity> Categories { get; set; }
+        // Полный список всех категорий (дерево)
+        public List<CategoryPartEntity> Categories { get; set; } = new();
 
         [BindProperty]
         public InputModel Input { get; set; }
@@ -42,28 +42,55 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             public Guid? ParentId { get; set; }
         }
 
+        // =====================
+        // 1) OnGetAsync – обычный GET, заполняем Categories
+        // =====================
         public async Task OnGetAsync()
+        {
+            await LoadAllCategories();
+        }
+
+        // Загружаем всё дерево (включая детей) сразу
+        private async Task LoadAllCategories()
         {
             Categories = await _context.CategoryParts
                 .Include(c => c.Children)
-                .OrderBy(c => c.CategoryName)
                 .ToListAsync();
         }
 
+        // =====================
+        // 2) AJAX-хендлер для подгрузки/обновления дерева (_CategoryTree.cshtml)
+        // =====================
+        public async Task<PartialViewResult> OnGetRefreshTreePartialAsync()
+        {
+            await LoadAllCategories();
+            // Отдаём паршал, который рендерит UL со всем деревом
+            return Partial("_CategoryTree", Categories.Where(c => c.ParentId == null));
+        }
+
+        // =====================
+        // 3) OnPostAsync (Add/Edit) – обрабатывает и Add, и Edit
+        //    Если это AJAX, возвращаем Partial. Если нет – делаем RedirectToPage.
+        // =====================
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
             {
-                foreach (var e in ModelState.Values.SelectMany(v => v.Errors))
-                    Console.WriteLine($"Validation error: {e.ErrorMessage}");
-                await OnGetAsync();
-                return Page();
+                await LoadAllCategories();
+                // Если это не AJAX, возвращаем обычный Page() с ошибками
+                if (!IsAjaxRequest())
+                    return Page();
+
+                // Если AJAX, обновить список и вернуть паршал с деревом
+                await LoadAllCategories();
+                return Partial("_CategoryTree", Categories.Where(c => c.ParentId == null));
             }
 
             try
             {
                 if (Input.Id == Guid.Empty)
                 {
+                    // Добавление новой категории
                     var entity = new CategoryPartEntity
                     {
                         Id = Guid.NewGuid(),
@@ -75,12 +102,16 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 }
                 else
                 {
+                    // Редактирование существующей
                     var entity = await _context.CategoryParts.FindAsync(Input.Id);
                     if (entity == null)
                     {
-                        ModelState.AddModelError(string.Empty, "��������� �� �������.");
-                        await OnGetAsync();
-                        return Page();
+                        ModelState.AddModelError(string.Empty, "Категория не найдена.");
+                        await LoadAllCategories();
+                        if (!IsAjaxRequest())
+                            return Page();
+
+                        return Partial("_CategoryTree", Categories.Where(c => c.ParentId == null));
                     }
 
                     entity.CategoryName = Input.CategoryName;
@@ -91,23 +122,35 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 }
 
                 await _context.SaveChangesAsync();
-                return RedirectToPage("./CategoryPart");
             }
             catch (DbUpdateException dbEx)
             {
-                Console.WriteLine($"[ERROR] DB update failed: {dbEx.InnerException?.Message ?? dbEx.Message}");
-                ModelState.AddModelError(string.Empty, "������ ���������� � ���� ������. ��������� ������������ �������� ��������� �� ����� ������.");
+                ModelState.AddModelError(string.Empty, "Ошибка сохранения в базу данных. Проверьте уникальность названия категории на одном уровне.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] General exception: {ex.Message}");
-                ModelState.AddModelError(string.Empty, "��������� �������������� ������.");
+                ModelState.AddModelError(string.Empty, "Произошла непредвиденная ошибка.");
             }
 
-            await OnGetAsync();
-            return Page();
+            // После сохранения (или ошибок) 
+            if (!IsAjaxRequest())
+            {
+                // Обычная загрузка страницы
+                return RedirectToPage("./CategoryPart");
+            }
+            else
+            {
+                // AJAX: вернуть обновлённое дерево
+                await LoadAllCategories();
+                return Partial("_CategoryTree", Categories.Where(c => c.ParentId == null));
+            }
         }
 
+        // =====================
+        // 4) OnPostDeleteAsync – удаление категории
+        //    Если есть дети – ошибка, иначе удаляем. 
+        //    Возвращаем Partial (AJAX) или Redirect (обычно)
+        // =====================
         public async Task<IActionResult> OnPostDeleteAsync(Guid id)
         {
             var category = await _context.CategoryParts
@@ -116,19 +159,48 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
 
             if (category == null)
             {
-                ModelState.AddModelError(string.Empty, "��������� �� �������");
-                return RedirectToPage();
+                // Если узел не найден, тоже вернём ошибку
+                if (!IsAjaxRequest())
+                {
+                    ModelState.AddModelError(string.Empty, "Категория не найдена");
+                    return RedirectToPage();
+                }
+                return BadRequest("Категория не найдена");
             }
 
             if (category.Children.Any())
             {
-                ModelState.AddModelError(string.Empty, "������� ������� ������������");
-                return RedirectToPage();
+                // Вместо того чтобы возвращать Partial, возвращаем 400 Bad Request с сообщением
+                if (!IsAjaxRequest())
+                {
+                    ModelState.AddModelError(string.Empty, "Сначала удалите подкатегории");
+                    return RedirectToPage();
+                }
+                return BadRequest("Нельзя удалить: у категории есть подкатегории");
             }
 
             _context.CategoryParts.Remove(category);
             await _context.SaveChangesAsync();
-            return RedirectToPage();
+
+            if (!IsAjaxRequest())
+            {
+                return RedirectToPage();
+            }
+            else
+            {
+                await LoadAllCategories();
+                return Partial("_CategoryTree", Categories.Where(c => c.ParentId == null));
+            }
+        }
+
+
+
+        // =====================
+        // Вспомогательный метод: определяем, пришёл ли запрос через AJAX
+        // =====================
+        private bool IsAjaxRequest()
+        {
+            return Request.Headers["X-Requested-With"] == "XMLHttpRequest";
         }
     }
 }

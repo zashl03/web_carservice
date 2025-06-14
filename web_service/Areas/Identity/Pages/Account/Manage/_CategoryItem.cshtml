@@ -1,70 +1,88 @@
 ﻿@model web_service.Models.Admin.CategoryItemViewModel
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @using web_service.Models.Admin
+
 @{
     var collapseId = $"children-{Model.Category.Id}";
-    var hasChildren = Model.Category.Children.Any();
-    var indent = Model.Level * 1.5;
+    var hasChildren = Model.Category.Children != null && Model.Category.Children.Any();
+    var indentPerLevel = 10; // либо сколько у вас px
+    var indentPx = Model.Level * indentPerLevel;
+    var iconColumnStyle = "width: 1.25rem; display: inline-block; text-align: center;";
 }
 
-<li class="list-group-item">
-    <div class="d-flex align-items-center">
-        @if (hasChildren)
-        {
-            <button class="btn btn-sm btn-link me-2 p-0"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#@collapseId"
-                    aria-expanded="false"
-                    aria-controls="@collapseId">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        }
-        else
-        {
-            <span class="me-2" style="width:1.25rem;"></span>
-        }
+<li class="list-group-item border-0 ps-0"
+    data-cat-id="@Model.Category.Id">
+    <!-- УБРАН margin-left из li -->
+    <!-- ДОБАВЛЕН margin-left сюда -->
+    <div class="d-flex w-100 justify-content-between align-items-center"
+         style="margin-left: @(indentPx)px">
 
-        <span style="margin-left:@($"{indent}rem")">
-            @Model.Category.CategoryName
-        </span>
+        <div class="d-flex align-items-center">
+            <span style="@iconColumnStyle">
+                @if (hasChildren)
+                {
+                    <button class="btn btn-sm btn-link p-0"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#@collapseId"
+                            aria-expanded="false"
+                            aria-controls="@collapseId"
+                            style="line-height: 1;">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                }
+                else
+                {
+                    <span></span>
+                }
+            </span>
 
-        <div class="ms-auto d-flex align-items-center">
+            <span class="cat-name">@Model.Category.CategoryName</span>
+            <!-- Оставлен ShortName из первого файла -->
+            @if (!string.IsNullOrEmpty(Model.Category.ShortName))
+            {
+                <small class="text-muted ms-2 cat-short">(@Model.Category.ShortName)</small>
+            }
+        </div>
+
+        <!-- Кнопки из первого файла (с AJAX-удалением) -->
+        <div class="d-flex align-items-center">
+            <!-- Кнопка "Добавить подкатегорию" с иконкой плюса -->
             <button class="btn btn-sm btn-outline-secondary me-1"
+                    title="Добавить подкатегорию"
                     data-bs-toggle="modal"
                     data-bs-target="#editModal"
-                    onclick="prepareModal('', '@Model.Category.Id')"
-                    title="Добавить подкатегорию">
+                    onclick="prepareModal('', '@Model.Category.Id')">
                 <i class="fas fa-plus"></i>
             </button>
 
+            <!-- Кнопка "Редактировать" с иконкой карандаша -->
             <button class="btn btn-sm btn-outline-primary me-1"
+                    title="Редактировать"
                     data-bs-toggle="modal"
                     data-bs-target="#editModal"
-                    onclick="prepareModal('@Model.Category.Id', '@Model.Category.ParentId')"
-                    title="Редактировать">
+                    onclick="prepareModal('@Model.Category.Id', '@Model.Category.ParentId')">
                 <i class="fas fa-edit"></i>
             </button>
 
-            <form method="post"
-                  asp-page-handler="Delete"
-                  asp-route-id="@Model.Category.Id"
-                  onsubmit="return confirm('Удалить категорию?');"
-                  class="d-inline">
-                <button type="submit"
-                        class="btn btn-sm btn-outline-danger"
-                        title="Удалить">
-                    <i class="fas fa-times"></i>
-                </button>
-            </form>
+            <!-- Кнопка "Удалить" с иконкой крестика -->
+            <button class="btn btn-sm btn-outline-danger"
+                    title="Удалить"
+                    onclick="deleteCategoryAjax('@Model.Category.Id')">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
     </div>
 
     @if (hasChildren)
     {
-        <ul class="list-group list-group-flush collapse mt-1" id="@collapseId">
+        <ul class="list-group list-group-flush collapse mt-1 ps-0" id="@collapseId">
             @foreach (var child in Model.Category.Children)
             {
-                @Html.Partial("_CategoryItem", new CategoryItemViewModel { Category = child, Level = Model.Level + 1 })
+                @Html.Partial("_CategoryItem", new CategoryItemViewModel
+   {
+       Category = child,
+       Level = Model.Level + 1
+   })
             }
         </ul>
     }

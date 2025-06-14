@@ -12,6 +12,9 @@ using web_service.Data;
 using web_service.Data.Identity;
 using AutoMapper;
 using web_service.Data.Entities;
+using System;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
 //using web_service.Services;
 //using web_service.Mappings;
 
@@ -20,14 +23,27 @@ var builder = WebApplication.CreateBuilder(args); // Создание билде
 /***************************
  * РАЗДЕЛ 1: КОНФИГУРАЦИЯ СЕРВИСОВ
  ***************************/
+builder.Services.Configure<RequestLocalizationOptions>(options => {
+    options.DefaultRequestCulture = new RequestCulture("ru-RU");
+    options.SupportedCultures = new List<CultureInfo> { new CultureInfo("ru-RU") };
+    options.SupportedUICultures = new List<CultureInfo> { new CultureInfo("ru-RU") };
+});
+// Автоматическое определение Docker-окружения
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
+{
+    builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true);
+}
+else
+{
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true);
+}
 
-// 1.1 Подключение к базе данных
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string not found.");
-
-// Настройка контекста БД с использованием PostgreSQL
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString)); // Использование провайдера Npgsql для PostgreSQL
+    options.UseNpgsql(connectionString));
+// 1.1 Подключение к базе данных
+
+// Настройка контекста БД с использованием PostgreSQL // Использование провайдера Npgsql для PostgreSQL
 
 // 1.2 Настройка системы Identity
 builder.Services
@@ -70,6 +86,20 @@ var app = builder.Build(); // Сборка приложения
 using (var scope = app.Services.CreateScope()) // Создание временного scope
 {
     var services = scope.ServiceProvider;
+
+    try
+    {
+        var db2 = services.GetRequiredService<ApplicationDbContext>();
+        Console.WriteLine("Applying database migrations...");
+        db2.Database.Migrate(); // Важно: применяет все ожидающие миграции
+        Console.WriteLine("Migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error applying migrations: {ex.Message}");
+        throw; // Прерываем запуск при ошибке миграций
+    }
+
     var roleMgr = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
     var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();

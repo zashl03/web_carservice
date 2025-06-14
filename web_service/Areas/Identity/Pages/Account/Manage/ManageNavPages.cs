@@ -31,26 +31,7 @@ namespace  web_service.Areas.Identity.Pages.Account.Manage
         /// </summary>
         public static string ChangePassword => "ChangePassword";
 
-        //NEW!!!!
-        public static string MyCars => "MyCars";
-
-        public static string Record => "Record";
-
-        public static string Employees => "Employees";
-        public static string StorageLocation => "StorageLocation";
-        public static string CategoryPart => "CategoryPart";
-
-        public static string Parts => "Parts";
-        public static string PartInStorage => "PartInStorage";
-        public static string TypeService => "TypeService";
-        public static string RecordApprove => "RecordApprove";
-        public static string Work => "Work";
-        public static string WorkOrders => "WorkOrders";
-        public static string WorkOrderDetails => "WorkOrderDetails";
-        public static string Clients => "Clients";
-        public static string Payment => "Payment";
-
-        /// <summary>TypeServiceRecordApprove Work WorkOrders Payment
+        /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
@@ -78,6 +59,26 @@ namespace  web_service.Areas.Identity.Pages.Account.Manage
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
+        public static string TwoFactorAuthentication => "TwoFactorAuthentication";
+
+        //NEW!!!!
+        public static string MyCars => "MyCars";
+
+        public static string Record => "Record";
+
+        public static string Employees => "Employees";
+        public static string StorageLocation => "StorageLocation";
+        public static string CategoryPart => "CategoryPart";
+
+        public static string Parts => "Parts";
+        public static string PartInStorage => "PartInStorage";
+        public static string TypeService => "TypeService";
+        public static string RecordApprove => "RecordApprove";
+        public static string Work => "Work";
+        public static string WorkOrders => "WorkOrders";
+        public static string WorkOrderDetails => "WorkOrderDetails";
+        public static string Clients => "Clients";
+        public static string Payment => "Payment";
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -96,6 +97,36 @@ namespace  web_service.Areas.Identity.Pages.Account.Manage
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public static string ChangePasswordNavClass(ViewContext viewContext) => PageNavClass(viewContext, ChangePassword);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string DownloadPersonalDataNavClass(ViewContext viewContext) => PageNavClass(viewContext, DownloadPersonalData);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string DeletePersonalDataNavClass(ViewContext viewContext) => PageNavClass(viewContext, DeletePersonalData);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string ExternalLoginsNavClass(ViewContext viewContext) => PageNavClass(viewContext, ExternalLogins);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string PersonalDataNavClass(ViewContext viewContext) => PageNavClass(viewContext, PersonalData);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string TwoFactorAuthenticationNavClass(ViewContext viewContext) => PageNavClass(viewContext, TwoFactorAuthentication);
 
         //NEW!!!
         public static string MyCarsNavClass(ViewContext viewContext) => PageNavClass(viewContext, MyCars);
@@ -125,36 +156,6 @@ namespace  web_service.Areas.Identity.Pages.Account.Manage
         public static string ClientsNavClass(ViewContext viewContext) => PageNavClass(viewContext, Clients);
 
         public static string PaymentNavClass(ViewContext viewContext) => PageNavClass(viewContext, Payment);
-
-        /// <summary>TypeService RecordApprove Work WorkOrders WorkOrderDetailsNavClass Clients Payment
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public static string DownloadPersonalDataNavClass(ViewContext viewContext) => PageNavClass(viewContext, DownloadPersonalData);
-
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public static string DeletePersonalDataNavClass(ViewContext viewContext) => PageNavClass(viewContext, DeletePersonalData);
-
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public static string ExternalLoginsNavClass(ViewContext viewContext) => PageNavClass(viewContext, ExternalLogins);
-
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public static string PersonalDataNavClass(ViewContext viewContext) => PageNavClass(viewContext, PersonalData);
-
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
         ///     directly from your code. This API may change or be removed in future releases.

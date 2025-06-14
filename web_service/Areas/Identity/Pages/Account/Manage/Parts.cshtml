@@ -3,7 +3,8 @@
 @{
     ViewData["Title"] = "Управление запчастями";
 }
-
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<meta charset="utf-8" />
 <h2>Управление запчастями</h2>
 
 <!-- ====================================================
@@ -59,12 +60,19 @@
                 <span asp-validation-for="Input.OEMNumber" class="text-danger"></span>
             </div>
 
+            <!-- Выбор категории (Select2) -->
             <div class="form-group mb-2">
-                <label asp-for="Input.CategoryId"></label>
-                <select asp-for="Input.CategoryId"
-                        asp-items="Model.CategorySelectList"
-                        class="form-control">
-                    <option value="">— Выберите категорию —</option>
+                <label asp-for="Input.CategoryId" class="form-label"></label>
+                <select id="input-CategoryId"
+                        name="Input.CategoryId"
+                        class="form-control"
+                        style="width: 100%;"
+                        data-placeholder="-- Начните вводить категорию --">
+                    <option></option> <!-- пустой для placeholder -->
+                    @foreach (var cat in Model.CategorySelectList)
+                    {
+                        <option value="@cat.Value">@cat.Text</option>
+                    }
                 </select>
                 <span asp-validation-for="Input.CategoryId" class="text-danger"></span>
             </div>
@@ -107,7 +115,6 @@
                         <td>@part.Price.ToString("F2")</td>
                         <td>@part.OEMNumber</td>
                         <td>
-                            <!-- Кнопка открывает модальное окно -->
                             <button type="button"
                                     class="btn btn-sm btn-primary btn-edit"
                                     data-id="@part.Id"
@@ -140,14 +147,16 @@
 <hr />
 
 <!-- ====================================================
-     3. Bootstrap-модальное окно для редактирования (с исправленным "крестиком")
+     3. Bootstrap-модальное окно для редактирования
      ==================================================== -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Редактировать запчасть</h5>
-                <!-- Вот здесь: type="button", class="close", data-dismiss="modal" -->
+                <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <form method="post" asp-page-handler="Save" id="edit-form">
@@ -200,15 +209,16 @@
                         <select asp-for="Input.CategoryId"
                                 asp-items="Model.CategorySelectList"
                                 class="form-control"
-                                id="edit-CategoryId">
-                            <option value="">— Выберите категорию —</option>
+                                id="edit-CategoryId"
+                                style="width: 100%;"
+                                data-placeholder="-- Выберите категорию --">
+                            <option></option> <!-- пустой для placeholder -->
                         </select>
                         <span asp-validation-for="Input.CategoryId" class="text-danger"></span>
                     </div>
 
                     <div class="modal-footer">
-                        <!-- Нажатие этой кнопки также закроет модалку, но форма при этом не сабмится -->
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
                         <button type="submit" class="btn btn-primary">Сохранить изменения</button>
                     </div>
                 </form>
@@ -217,53 +227,72 @@
     </div>
 </div>
 
-<!-- ====================================================
-     4. Скрипты: jQuery, Bootstrap и наш JS для модального окна
-     ==================================================== -->
-<!-- jQuery (необходим для Bootstrap) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"
-        integrity="sha256-/xUj+3OJ+Yy9N4/R+v6QEn6ztX4Sv5K2IdZh9f98tZU="
-        crossorigin="anonymous"></script>
-
-<!-- Bootstrap JS (для модального окна) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-Piv4xVNRyMGpqkYfYfTc+3laZN8exmNQhLo9I5M7uGQ5jOeLO0DnhbxtSi3H2dj"
-        crossorigin="anonymous"></script>
-<!-- Не забудьте проверить, что подключены именно эти скрипты для Bootstrap 4.x -->
 @section Scripts {
-<script>
-    $(function () {
-        $('.btn-edit').on('click', function () {
-            var partId = $(this).data('id');
-            var url = window.location.pathname.replace(/\/$/, "") + '?handler=PartDetails&id=' + partId;
-            $.ajax({
-                url: url,
-                type: 'GET',
-                success: function (data) {
-                    if (data) {
-                        // Заполняем скрытое поле Id
-                        $('#edit-form input[name="Input.Id"]').val(data.id);
-                        // Заполняем остальные поля по их id
-                        $('#edit-PartName').val(data.partName);
-                        $('#edit-ServicePn').val(data.servicePn);
-                        $('#edit-ManufacturerPn').val(data.manufacturerPn);
-                        $('#edit-Manufacturer').val(data.manufacturer);
-                        $('#edit-Description').val(data.description);
-                        $('#edit-Price').val(data.price);
-                        $('#edit-OEMNumber').val(data.oEMNumber);
-                        $('#edit-CategoryId').val(data.categoryId);
-                        // Показываем модалку
-                        $('#editModal').modal('show');
-                    } else {
-                        alert('Данные не найдены.');
+    <!-- jQuery (нужен для Bootstrap и Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS (для модальных окон) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // 1) Инициализируем Select2 для поля CategoryId в форме создания
+            $('#input-CategoryId').select2({
+                width: '100%',
+                placeholder: $(this).data('placeholder') || '-- Начните вводить категорию --',
+                allowClear: true,
+                // Принудительно показываем выпадающий список вниз
+                dropdownParent: $('body')
+            });
+
+            // 2) Инициализируем Select2 для поля CategoryId в модальном окне редактирования
+            $('#edit-CategoryId').select2({
+                width: '100%',
+                placeholder: $(this).data('placeholder') || '-- Выберите категорию --',
+                allowClear: true,
+                dropdownParent: $('#editModal')
+            });
+
+            // 3) Обработка клика по кнопке редактирования (btn-edit)
+            $('.btn-edit').on('click', function () {
+                var partId = $(this).data('id');
+                var url = window.location.pathname.replace(/\/$/, "") + '?handler=PartDetails&id=' + partId;
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (data) {
+                        if (data) {
+                            // Заполняем скрытое поле Id
+                            $('#edit-form input[name="Input.Id"]').val(data.id);
+                            // Заполняем остальные поля
+                            $('#edit-PartName').val(data.partName);
+                            $('#edit-ServicePn').val(data.servicePn);
+                            $('#edit-ManufacturerPn').val(data.manufacturerPn);
+                            $('#edit-Manufacturer').val(data.manufacturer);
+                            $('#edit-Description').val(data.description);
+                            $('#edit-Price').val(data.price);
+                            $('#edit-OEMNumber').val(data.oEMNumber);
+                            // Устанавливаем значение в Select2 и триггерим событие change
+                            $('#edit-CategoryId').val(data.categoryId).trigger('change');
+                            // Показываем модальное окно
+                            $('#editModal').modal('show');
+                        } else {
+                            alert('Данные не найдены.');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("AJAX-ошибка:", status, error);
+                        alert('Ошибка при загрузке данных для редактирования.');
                     }
-                },
-                error: function (xhr, status, error) {
-                    console.error("AJAX-ошибка:", status, error);
-                    alert('Ошибка при загрузке данных для редактирования.');
-                }
+                });
+            });
+
+            // 4) Явно убираем backdrop при закрытии модального окна, если он остался
+            $('#editModal').on('hidden.bs.modal', function () {
+                $('.modal-backdrop').remove();
             });
         });
-    });
-</script>
+    </script>
 }

@@ -15,7 +15,7 @@
     bool isStorekeeper = roles.Contains("Storekeeper");
     bool isMechanic = roles.Contains("Mechanic");
 }
-
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <h2>@ViewData["Title"]</h2>
 
 <!-- ============================================
@@ -84,7 +84,7 @@
                 {
                     <form method="post" asp-page-handler="ChangeStatus" class="form-inline">
                         <input type="hidden" asp-for="SelectedOrderId" />
-                        <select asp-for="NewStatus" class="form-control mr-2">
+                        <select asp-for="NewStatus" class="form-control mr-2 mb-2">
                             <option value="New">New</option>
                             <option value="Registered">Registered</option>
                             <option value="PartsReady">PartsReady</option>
@@ -289,12 +289,28 @@
                 <div class="modal-body">
                     <input type="hidden" asp-for="SelectedOrderId" />
 
-                    <div class="form-group">
-                        <label asp-for="CreateTask.WorkId"></label>
-                        <select asp-for="CreateTask.WorkId"
+                    <!--div class="form-group">
+                        <!--label asp-for="CreateTask.WorkId"></!--label>
+                        <!--select asp-for="CreateTask.WorkId"
                                 asp-items="Model.WorksSelectList"
                                 class="form-control select2">
-                            <option value="">— Выберите работу —</option>
+                            <!--option value="">— Выберите работу —</!--option>
+                        </!--select>
+                        <!--span asp-validation-for="CreateTask.WorkId" class="text-danger"></!--span>
+                    </!--div>
+                    <!-- Выбор категории (Select2) -->
+                    <div class="form-group mb-2">
+                        <label asp-for="CreateTask.WorkId" class="form-label"></label>
+                        <select id="createtask-WorkId"
+                                name="CreateTask.WorkId"
+                                class="form-control"
+                                style="width: 100%;"
+                                data-placeholder="-- Начните вводить категорию --">
+                            <option></option> <!-- пустой для placeholder -->
+                            @foreach (var wor in Model.WorksSelectList)
+                            {
+                                <option value="@wor.Value">@wor.Text</option>
+                            }
                         </select>
                         <span asp-validation-for="CreateTask.WorkId" class="text-danger"></span>
                     </div>
@@ -319,7 +335,7 @@
 
                     <div class="form-group">
                         <label asp-for="CreateTask.FactCost"></label>
-                        <input asp-for="CreateTask.FactCost" class="form-control" type="number" step="0.01" />
+                        <input asp-for="CreateTask.FactCost" id="task-FactCost" class="form-control" type="number" step="0.01" />
                         <span asp-validation-for="CreateTask.FactCost" class="text-danger"></span>
                     </div>
 
@@ -354,14 +370,18 @@
                 <div class="modal-body">
                     <input type="hidden" asp-for="SelectedOrderId" />
                     <input type="hidden" asp-for="EditTask.Id" />
-
                     <div class="form-group mb-2">
-                        <label asp-for="EditTask.WorkId"></label>
-                        <select asp-for="EditTask.WorkId"
-                                asp-items="Model.WorksSelectList"
-                                class="form-control select2"
-                                id="edit-WorkId">
-                            <option value="">— Выберите работу —</option>
+                        <label asp-for="EditTask.WorkId" class="form-label"></label>
+                        <select id="edittask-WorkId"
+                                name="EditTask.WorkId"
+                                class="form-control"
+                                style="width: 100%;"
+                                data-placeholder="-- Начните вводить категорию --">
+                            <option></option> <!-- пустой для placeholder -->
+                            @foreach (var wor in Model.WorksSelectList)
+                            {
+                                <option value="@wor.Value">@wor.Text</option>
+                            }
                         </select>
                         <span asp-validation-for="EditTask.WorkId" class="text-danger"></span>
                     </div>
@@ -440,10 +460,18 @@
                         <span asp-validation-for="CreatePart.WorkTaskId" class="text-danger"></span>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="form-group mb-2">
                         <label asp-for="CreatePart.PartId" class="form-label"></label>
-                        <select asp-for="CreatePart.PartId" asp-items="Model.PartsInStockSelectList" class="form-select select2">
-                            <option value="">— Выберите запчасть —</option>
+                        <select id="createpart-PartId"
+                                name="CreatePart.PartId"
+                                class="form-control"
+                                style="width: 100%;"
+                                data-placeholder="-- Начните вводить категорию --">
+                            <option></option> <!-- пустой для placeholder -->
+                            @foreach (var par in Model.PartsInStockSelectList)
+                            {
+                                <option value="@par.Value">@par.Text</option>
+                            }
                         </select>
                         <span asp-validation-for="CreatePart.PartId" class="text-danger"></span>
                     </div>
@@ -464,7 +492,7 @@
 
                     <div class="mb-3">
                         <label asp-for="CreatePart.Cost" class="form-label"></label>
-                        <input asp-for="CreatePart.Cost" class="form-control" type="number" step="0.01" />
+                        <input asp-for="CreatePart.Cost" class="form-control" id="part-Cost" type="number" step="0.01" />
                         <span asp-validation-for="CreatePart.Cost" class="text-danger"></span>
                     </div>
                 </div>
@@ -501,10 +529,17 @@
                     </div>
 
                     <div class="form-group mb-2">
-                        <label asp-for="EditPart.PartId"></label>
-                        <select asp-for="EditPart.PartId" asp-items="Model.PartsInStockSelectList"
-                                class="form-control select2" id="edit-PartPartId">
-                            <option value="">— Выберите запчасть —</option>
+                        <label asp-for="EditPart.PartId" class="form-label"></label>
+                        <select id="editpart-PartId"
+                                name="EditPart.PartId"
+                                class="form-control"
+                                style="width: 100%;"
+                                data-placeholder="-- Начните вводить категорию --">
+                            <option></option> <!-- пустой для placeholder -->
+                            @foreach (var par in Model.PartsInStockSelectList)
+                            {
+                                <option value="@par.Value">@par.Text</option>
+                            }
                         </select>
                         <span asp-validation-for="EditPart.PartId" class="text-danger"></span>
                     </div>
@@ -546,23 +581,157 @@
      5. Подключение скриптов (jQuery, Bootstrap, Select2) и JS-логики
      ============================================ -->
 @section Scripts {
-    <!-- jQuery (если не подключён) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
-            integrity="sha256-/xUj+3OJ+Yy9N4/R+v6QEn6ztX4Sv5K2IdZh9f98tZU="
-            crossorigin="anonymous"></script>
-
-    <!-- Bootstrap JS (для вкладок и модалок) -->
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"
-            integrity="sha384-LtrjvnR4/J8Xv8KnukRyT9y1y+0JVpaz6bBiYDRgqJ6qz6jIW1TL7knr3N0uf0Hg"
-            crossorigin="anonymous"></script>
-
-    <!-- Select2 CSS & JS (автопоиск в <select>) -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+    <!-- jQuery (нужен для Bootstrap и Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS (для модальных окон) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 
     <script>
-        $(function () {
+        $(document).ready(function () {
+
+            // 1) Инициализируем Select2 для поля WorkId в форме создания
+            $('#createtask-WorkId').select2({
+                width: '100%',
+                placeholder: $(this).data('placeholder') || '-- Начните вводить категорию --',
+                allowClear: true,
+                // Принудительно показываем выпадающий список вниз
+                dropdownParent: $('#createTaskModal')
+            });
+            // 2) Инициализируем Select2 для поля WorkId в форме редактирования
+            $('#edittask-WorkId').select2({
+                width: '100%',
+                placeholder: $(this).data('placeholder') || '-- Начните вводить категорию --',
+                allowClear: true,
+                // Принудительно показываем выпадающий список вниз
+                dropdownParent: $('#editTaskModal')
+            });
+            // 3) Инициализируем Select2 для поля PartId в форме создания
+            $('#createpart-PartId').select2({
+                width: '100%',
+                placeholder: $(this).data('placeholder') || '-- Начните вводить категорию --',
+                allowClear: true,
+                // Принудительно показываем выпадающий список вниз
+                dropdownParent: $('#createPartModal')
+            });
+            // 4) Инициализируем Select2 для поля PartId в форме редактирования
+            $('#editpart-PartId').select2({
+                width: '100%',
+                placeholder: $(this).data('placeholder') || '-- Начните вводить категорию --',
+                allowClear: true,
+                // Принудительно показываем выпадающий список вниз
+                dropdownParent: $('#editPartModal')
+            });
+
+            // 3) Обработка клика по кнопке редактирования (btn-edit)
+            $('.btn-edit').on('click', function () {
+                var partId = $(this).data('id');
+                var url = window.location.pathname.replace(/\/$/, "") + '?handler=PartDetails&id=' + partId;
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (data) {
+                        if (data) {
+                            // Заполняем скрытое поле Id
+                            $('#edit-form input[name="Input.Id"]').val(data.id);
+                            // Заполняем остальные поля
+                            $('#edit-PartName').val(data.partName);
+                            $('#edit-ServicePn').val(data.servicePn);
+                            $('#edit-ManufacturerPn').val(data.manufacturerPn);
+                            $('#edit-Manufacturer').val(data.manufacturer);
+                            $('#edit-Description').val(data.description);
+                            $('#edit-Price').val(data.price);
+                            $('#edit-OEMNumber').val(data.oEMNumber);
+                            // Устанавливаем значение в Select2 и триггерим событие change
+                            $('#edit-CategoryId').val(data.categoryId).trigger('change');
+                            // Показываем модальное окно
+                            $('#editModal').modal('show');
+                        } else {
+                            alert('Данные не найдены.');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("AJAX-ошибка:", status, error);
+                        alert('Ошибка при загрузке данных для редактирования.');
+                    }
+                });
+            });
+
+
+            // === 2) Слушаем выбор работы в модалке «Добавить работу» ===
+            $('#createtask-WorkId').on('select2:select select2:clear', function () {
+                // Получаем выбранный WorkId (строка) или пустую строку
+                var workId = $('#createtask-WorkId').val() || '';
+                console.log('Серверный (JS) лог: WorkId =', workId);
+
+                // Если ничего не выбрано, просто очищаем поле FactCost
+                if (!workId) {
+                    $('#task-FactCost').val('');
+                    return;
+                }
+
+                // Составляем URL для AJAX (параметр должен называться "id", поскольку метод ожидает Guid id)
+                var url = window.location.pathname.replace(/\/$/, "")
+                    + '?handler=GetWorkPrice&id=' + encodeURIComponent(workId);
+
+                console.log('Серверный (JS) лог: AJAX запрос к =', url);
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (response) {
+                        // Ожидаем ответ вида { price: decimal }
+                        var price = response.price !== undefined ? response.price : null;
+                        console.log('Серверный (JS) лог: получена цена =', price);
+
+                        // Задаём это значение в поле FactCost
+                        $('#task-FactCost').val(price || '');
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Ошибка при загрузке цены работы:', status, error);
+                        $('#task-FactCost').val('');
+                    }
+                });
+            });
+
+            // === 2) Слушаем выбор работы в модалке «Добавить работу» ===
+            $('#createpart-PartId').on('select2:select select2:clear', function () {
+                // Получаем выбранный WorkId (строка) или пустую строку
+                var PartId = $('#createpart-PartId').val() || '';
+                console.log('Серверный (JS) лог: PartId =', PartId);
+
+                // Если ничего не выбрано, просто очищаем поле FactCost
+                if (!PartId) {
+                    $('#part-Cost').val('');
+                    return;
+                }
+
+                // Составляем URL для AJAX (параметр должен называться "id", поскольку метод ожидает Guid id)
+                var url = window.location.pathname.replace(/\/$/, "")
+                    + '?handler=GetPartPrice&id=' + encodeURIComponent(PartId);
+
+                console.log('Серверный (JS) лог: AJAX запрос к =', url);
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (response) {
+                        // Ожидаем ответ вида { price: decimal }
+                        var price = response.price !== undefined ? response.price : null;
+                        console.log('Серверный (JS) лог: получена цена =', price);
+
+                        // Задаём это значение в поле FactCost
+                        $('#part-Cost').val(price || '');
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Ошибка при загрузке цены работы:', status, error);
+                        $('#part-Cost').val('');
+                    }
+                });
+            });
+
+
             // Редактировать работу
             $('.btn-edit-task').on('click', function () {
                 var taskId = $(this).data('id');
@@ -576,11 +745,11 @@
                     $('#edit-FactCost').val(data.factCost);
                     $('#edit-MechanicId').val(data.mechanicId || '').trigger('change');
                     $('input[name="SelectedOrderId"]').val('@Model.SelectedOrderId');
-                    $('input[name="EditTask.Id"]').val(data.id);
+                    $('#edittask-WorkId').val(data.workId).trigger('change');
                     $('#editTaskModal').modal('show');
                 }).fail(function () { alert('Ошибка при загрузке данных задачи.'); });
             });
-
+            
             // Редактировать запчасть
             $('.btn-edit-part').on('click', function () {
                 var partId = $(this).data('id');
@@ -593,10 +762,11 @@
                     $('#edit-PartQuantity').val(data.quantity);
                     $('#edit-PartCost').val(data.cost);
                     $('input[name="SelectedOrderId"]').val('@Model.SelectedOrderId');
-                    $('input[name="EditPart.Id"]').val(data.id);
+                    $('#editpart-PartId').val(data.partId).trigger('change');
                     $('#editPartModal').modal('show');
                 }).fail(function () { alert('Ошибка при загрузке данных запчасти.'); });
             });
+            
         });
     </script>
 }

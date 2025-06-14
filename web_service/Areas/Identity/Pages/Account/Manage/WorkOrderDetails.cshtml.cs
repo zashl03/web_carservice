@@ -223,7 +223,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             if (!TryValidateModel(CreatePart, PFX))
                 return await OnGetAsync();
 
-            _db.PartInWorks.Add(new PartInWorkEntity
+            var newPartInWork = new PartInWorkEntity
             {
                 Id = Guid.NewGuid(),
                 WorkTaskId = CreatePart.WorkTaskId,
@@ -231,7 +231,37 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 StorekeeperId = string.IsNullOrWhiteSpace(CreatePart.StorekeeperId) ? null : CreatePart.StorekeeperId,
                 Quantity = CreatePart.Quantity,
                 Cost = CreatePart.Cost
-            });
+            };
+            _db.PartInWorks.Add(newPartInWork);
+
+            var storageEntry = await _db.PartInStorages
+        .FirstOrDefaultAsync(p => p.PartId == CreatePart.PartId);
+
+            if (storageEntry != null)
+            {
+                // Вычитаем Quantity из хранилища
+                storageEntry.Quantity -= CreatePart.Quantity;
+                // Предотвращаем отрицательное количество (опционально)
+                if (storageEntry.Quantity < 0)
+                {
+                    ModelState.AddModelError(PFX + ".Quantity", "Недостаточно запчастей на складе.");
+                    // Откатываем добавление PartInWork и возвращаемся
+                    _db.PartInWorks.Remove(newPartInWork);
+                    return await OnGetAsync();
+                }
+
+                // Обновляем запись в контексте
+                _db.PartInStorages.Update(storageEntry);
+            }
+            else
+            {
+                // Если запись не найдена, можно вернуть ошибку или создать новую запись с отрицательным количеством
+                ModelState.AddModelError(PFX + ".PartId", "Запчасть не найдена в хранилище.");
+                // Откатываем добавление PartInWork и возвращаемся
+                _db.PartInWorks.Remove(newPartInWork);
+                return await OnGetAsync();
+            }
+
             await _db.SaveChangesAsync();
             return await OnGetAsync();
         }
@@ -248,18 +278,51 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             if (!TryValidateModel(EditPart, PFX))
                 return await OnGetAsync();
 
-            var e = await _db.PartInWorks.FindAsync(EditPart.Id);
-            if (e == null)
+            var existingWork = await _db.PartInWorks.FindAsync(EditPart.Id);
+            if (existingWork == null)
             {
                 ModelState.AddModelError(string.Empty, "Запись не найдена.");
                 return await OnGetAsync();
             }
-            e.WorkTaskId = EditPart.WorkTaskId;
-            e.PartId = EditPart.PartId;
-            e.StorekeeperId = string.IsNullOrWhiteSpace(EditPart.StorekeeperId) ? null : EditPart.StorekeeperId;
-            e.Quantity = EditPart.Quantity;
-            e.Cost = EditPart.Cost;
-            _db.PartInWorks.Update(e);
+
+            // Сохраним старые значения, чтобы скорректировать склад
+            var oldPartId = existingWork.PartId;
+            var oldQuantity = existingWork.Quantity;
+
+            // Новые значения из модели
+            var newPartId = EditPart.PartId;
+            var newQuantity = EditPart.Quantity;
+
+            var storageOld = await _db.PartInStorages
+        .FirstOrDefaultAsync(p => p.PartId == oldPartId);
+            if (storageOld != null)
+            {
+                storageOld.Quantity += oldQuantity;
+                _db.PartInStorages.Update(storageOld);
+            }
+            var storageNew = await _db.PartInStorages
+        .FirstOrDefaultAsync(p => p.PartId == newPartId);
+            if (storageNew != null)
+            {
+                storageNew.Quantity -= newQuantity;
+                if (storageNew.Quantity < 0)
+                {
+                    ModelState.AddModelError(PFX + ".Quantity", "Недостаточно запчастей на складе для обновления.");
+                    // Откатим изменения в памяти: вернём обратно oldQuantity у storageOld и не сохраним
+                    storageOld.Quantity -= oldQuantity;
+                    _db.Entry(storageOld).State = EntityState.Unchanged;
+                    return await OnGetAsync();
+                }
+                _db.PartInStorages.Update(storageNew);
+            }
+
+            existingWork.WorkTaskId = EditPart.WorkTaskId;
+            existingWork.PartId = newPartId;
+            existingWork.StorekeeperId = string.IsNullOrWhiteSpace(EditPart.StorekeeperId) ? null : EditPart.StorekeeperId;
+            existingWork.Quantity = newQuantity;
+            existingWork.Cost = EditPart.Cost;
+            _db.PartInWorks.Update(existingWork);
+
             await _db.SaveChangesAsync();
             return await OnGetAsync();
         }
@@ -411,6 +474,44 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                                     StorekeeperName = pi.Storekeeper.User.FullName
                                 })
                                 .ToListAsync();
+            // NEW CODE FIX IF ERRORS!!!!
+            var tasksCost = await _db.WorkTasks
+        .Where(t => t.WorkOrderId == orderId && t.FactCost != null)
+        .SumAsync(t => t.FactCost!.Value * t.Quantity);
+
+            // 2) Сумма по запчастям (quantity * Cost)
+            var partsCost = await _db.PartInWorks
+                .Include(pi => pi.WorkTask) // чтобы иметь доступ к WorkTask.WorkOrderId
+                .Where(pi => pi.WorkTask.WorkOrderId == orderId)
+                .SumAsync(pi => pi.Cost * pi.Quantity);
+
+            // Записываем в модель (CurrentOrder.Cost — это decimal?)
+            CurrentOrder.Cost = tasksCost + partsCost;
+        }
+        /// <summary>
+        /// Возвращает базовую цену работы (Work) по её Id
+        /// </summary>
+        public async Task<JsonResult> OnGetGetWorkPriceAsync(Guid id)
+        {
+            // Предполагаем, что в таблице Works есть поле WorkPrice (decimal)
+            var work = await _db.Works.AsNoTracking().FirstOrDefaultAsync(w => w.Id == id);
+            if (work == null)
+                return new JsonResult(new { price = (decimal?)null });
+
+            return new JsonResult(new { price = work.Price });
+        }
+
+        /// <summary>
+        /// Возвращает базовую цену запчасти (Part) по её Id
+        /// </summary>
+        public async Task<JsonResult> OnGetGetPartPriceAsync(Guid id)
+        {
+            // Допустим, что в сущности Part есть поле PartPrice (decimal)
+            var part = await _db.Parts.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
+            if (part == null)
+                return new JsonResult(new { price = (decimal?)null });
+
+            return new JsonResult(new { price = part.Price });
         }
 
         // ================================

@@ -1,0 +1,21 @@
+﻿@model IEnumerable<web_service.Data.Entities.CategoryPartEntity>
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<ul class="list-group list-group-flush ps-0">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var rootCat in Model)
+        {
+            @Html.Partial("_CategoryItem", new web_service.Models.Admin.CategoryItemViewModel
+{
+    Category = rootCat,
+    Level = 0
+})
+        }
+    }
+    else
+    {
+        @* Например, можно оставить пустым или показать строчку «Категорий нет». *@
+        @* <li class="list-group-item text-muted">Корневых категорий нет</li> *@
+    }
+</ul>

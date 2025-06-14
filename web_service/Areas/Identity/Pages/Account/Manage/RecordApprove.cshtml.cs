@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -28,48 +28,48 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             _logger = logger;
         }
 
-        // Модель для создания новой заявки администратором
+        // РњРѕРґРµР»СЊ РґР»СЏ СЃРѕР·РґР°РЅРёСЏ РЅРѕРІРѕР№ Р·Р°СЏРІРєРё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂРѕРј
         public class CreateRecordInputModel
         {
             [Required]
-            [Display(Name = "Клиент")]
-            public string ClientId { get; set; } = string.Empty;  // string, не Guid
+            [Display(Name = "РљР»РёРµРЅС‚")]
+            public string ClientId { get; set; } = string.Empty;  // string, РЅРµ Guid
 
             [Required]
-            [Display(Name = "Автомобиль")]
+            [Display(Name = "РђРІС‚РѕРјРѕР±РёР»СЊ")]
             public Guid CarId { get; set; }
 
             [Required]
             [DataType(DataType.Date)]
-            [Display(Name = "Дата приёма")]
+            [Display(Name = "Р”Р°С‚Р° РїСЂРёС‘РјР°")]
             public DateTime DateAppointment { get; set; }
 
             [MaxLength(500)]
-            [Display(Name = "Комментарий клиента")]
+            [Display(Name = "РљРѕРјРјРµРЅС‚Р°СЂРёР№ РєР»РёРµРЅС‚Р°")]
             public string? ClientComment { get; set; }
 
             [Required]
-            [Display(Name = "Услуга")]
+            [Display(Name = "РЈСЃР»СѓРіР°")]
             public Guid TypeServiceId { get; set; }
 
             [Required]
             [MaxLength(50)]
-            [Display(Name = "Статус")]
+            [Display(Name = "РЎС‚Р°С‚СѓСЃ")]
             public string Status { get; set; } = "Approved";
         }
 
         [BindProperty]
         public CreateRecordInputModel CreateInput { get; set; }
 
-        // Списки для выпадающих списков
+        // РЎРїРёСЃРєРё РґР»СЏ РІС‹РїР°РґР°СЋС‰РёС… СЃРїРёСЃРєРѕРІ
         public List<SelectListItem> ClientsSelectList { get; set; } = new();
         public List<SelectListItem> ServicesSelectList { get; set; } = new();
         public List<SelectListItem> StatusSelectList { get; set; } = new();
 
-        // Существующие заявки (для таблицы)
+        // РЎСѓС‰РµСЃС‚РІСѓСЋС‰РёРµ Р·Р°СЏРІРєРё (РґР»СЏ С‚Р°Р±Р»РёС†С‹)
         public IList<RecordEntity> Records { get; set; } = new List<RecordEntity>();
 
-        // Модель для редактирования заявки
+        // РњРѕРґРµР»СЊ РґР»СЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ Р·Р°СЏРІРєРё
         public class RecordApproveInputModel
         {
             public Guid Id { get; set; }
@@ -90,7 +90,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
 
         public async Task<IActionResult> OnGetAsync()
         {
-            // 1) Загружаем существующие заявки
+            // 1) Р—Р°РіСЂСѓР¶Р°РµРј СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёРµ Р·Р°СЏРІРєРё
             Records = await _context.Records
                 .Include(r => r.Car)
                     .ThenInclude(c => c.Client)
@@ -99,17 +99,17 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 .OrderBy(r => r.DateAppointment)
                 .ToListAsync();
 
-            // 2) Список клиентов (ClientProfileId — строка)
+            // 2) РЎРїРёСЃРѕРє РєР»РёРµРЅС‚РѕРІ (ClientProfileId вЂ” СЃС‚СЂРѕРєР°)
             ClientsSelectList = await _context.ClientProfiles
                 .Include(c => c.User)
                 .Select(c => new SelectListItem
                 {
-                    Value = c.UserId, // строковый ID
-                    Text = c.User.PhoneNumber + " — " + c.User.FullName
+                    Value = c.UserId, // СЃС‚СЂРѕРєРѕРІС‹Р№ ID
+                    Text = c.User.PhoneNumber + " вЂ” " + c.User.FullName
                 })
                 .ToListAsync();
 
-            // 3) Список услуг
+            // 3) РЎРїРёСЃРѕРє СѓСЃР»СѓРі
             ServicesSelectList = await _context.TypeServices
                 .Select(s => new SelectListItem
                 {
@@ -118,7 +118,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 })
                 .ToListAsync();
 
-            // 4) Жёстко заданный список статусов
+            // 4) Р–С‘СЃС‚РєРѕ Р·Р°РґР°РЅРЅС‹Р№ СЃРїРёСЃРѕРє СЃС‚Р°С‚СѓСЃРѕРІ
             StatusSelectList = new List<SelectListItem>
             {
                 new SelectListItem { Value = "New", Text = "New" },
@@ -128,10 +128,10 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return Page();
         }
 
-        // AJAX-метод: возвращает JSON-список машин для выбранного клиента
+        // AJAX-РјРµС‚РѕРґ: РІРѕР·РІСЂР°С‰Р°РµС‚ JSON-СЃРїРёСЃРѕРє РјР°С€РёРЅ РґР»СЏ РІС‹Р±СЂР°РЅРЅРѕРіРѕ РєР»РёРµРЅС‚Р°
         public async Task<JsonResult> OnGetCarsAsync(string clientId)
         {
-            // Логируем в серверную консоль
+            // Р›РѕРіРёСЂСѓРµРј РІ СЃРµСЂРІРµСЂРЅСѓСЋ РєРѕРЅСЃРѕР»СЊ
             _logger.LogInformation($"OnGetCarsAsync called with clientId = {clientId}");
 
             var cars = await _context.Cars
@@ -139,14 +139,14 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 .Select(c => new
                 {
                     id = c.Id,
-                    display = c.LicencePlate + " — " + c.Brand // или другое свойство марки
+                    display = c.LicencePlate + " вЂ” " + c.Brand // РёР»Рё РґСЂСѓРіРѕРµ СЃРІРѕР№СЃС‚РІРѕ РјР°СЂРєРё
                 })
                 .ToListAsync();
 
             return new JsonResult(cars);
         }
 
-        // POST: Создание новой заявки
+        // POST: РЎРѕР·РґР°РЅРёРµ РЅРѕРІРѕР№ Р·Р°СЏРІРєРё
         public async Task<IActionResult> OnPostCreateAsync()
         {
             const string PFX = nameof(CreateInput);
@@ -181,7 +181,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return RedirectToPage();
         }
 
-        // POST: Редактирование существующей заявки
+        // POST: Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµР№ Р·Р°СЏРІРєРё
         public async Task<IActionResult> OnPostApproveAsync()
         {
             const string PFX = nameof(Input);
@@ -211,7 +211,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return RedirectToPage();
         }
 
-        // AJAX: детали заявки (без изменений)
+        // AJAX: РґРµС‚Р°Р»Рё Р·Р°СЏРІРєРё (Р±РµР· РёР·РјРµРЅРµРЅРёР№)
         public async Task<JsonResult> OnGetRecordDetailsAsync(Guid id)
         {
             var rec = await _context.Records

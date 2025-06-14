@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -30,17 +30,17 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             _userMgr = userMgr;
         }
 
-        // Список сотрудников для таблицы
+        // РЎРїРёСЃРѕРє СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ РґР»СЏ С‚Р°Р±Р»РёС†С‹
         public List<EmployeeListViewModel> Employees { get; set; } = new();
 
-        // Модель, общая для создания и редактирования
+        // РњРѕРґРµР»СЊ, РѕР±С‰Р°СЏ РґР»СЏ СЃРѕР·РґР°РЅРёСЏ Рё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
         [BindProperty]
         public InputModel Input { get; set; } = new();
 
-        // Список ролей для <select>
+        // РЎРїРёСЃРѕРє СЂРѕР»РµР№ РґР»СЏ <select>
         public SelectList RoleSelectList { get; set; } = null!;
 
-        // GET: подгрузка сотрудников + ролей
+        // GET: РїРѕРґРіСЂСѓР·РєР° СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ + СЂРѕР»РµР№
         public async Task OnGetAsync()
         {
             Employees.Clear();
@@ -67,17 +67,17 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             RoleSelectList = new SelectList(allRoles);
         }
 
-        // POST: создание нового сотрудника
+        // POST: СЃРѕР·РґР°РЅРёРµ РЅРѕРІРѕРіРѕ СЃРѕС‚СЂСѓРґРЅРёРєР°
         public async Task<IActionResult> OnPostCreateAsync()
         {
-            // валидация: при создании Password обязателен, UserId должен быть пустым
+            // РІР°Р»РёРґР°С†РёСЏ: РїСЂРё СЃРѕР·РґР°РЅРёРё Password РѕР±СЏР·Р°С‚РµР»РµРЅ, UserId РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РїСѓСЃС‚С‹Рј
             ModelState.Remove(nameof(Input.UserId));
             if (string.IsNullOrEmpty(Input.Password))
             {
-                ModelState.AddModelError(nameof(Input.Password), "Пароль обязателен.");
+                ModelState.AddModelError(nameof(Input.Password), "РџР°СЂРѕР»СЊ РѕР±СЏР·Р°С‚РµР»РµРЅ.");
             }
 
-            await OnGetAsync(); // чтобы в случае ошибки таблица была заполнена
+            await OnGetAsync(); // С‡С‚РѕР±С‹ РІ СЃР»СѓС‡Р°Рµ РѕС€РёР±РєРё С‚Р°Р±Р»РёС†Р° Р±С‹Р»Р° Р·Р°РїРѕР»РЅРµРЅР°
 
             if (!ModelState.IsValid)
                 return Page();
@@ -100,11 +100,11 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
 
             await _userMgr.AddToRoleAsync(user, Input.Role);
 
-            // Подтверждаем e-mail
+            // РџРѕРґС‚РІРµСЂР¶РґР°РµРј e-mail
             var token = await _userMgr.GenerateEmailConfirmationTokenAsync(user);
             await _userMgr.ConfirmEmailAsync(user, token);
 
-            // Сохраняем профиль сотрудника
+            // РЎРѕС…СЂР°РЅСЏРµРј РїСЂРѕС„РёР»СЊ СЃРѕС‚СЂСѓРґРЅРёРєР°
             var employeeProfile = new EmployeeProfile
             {
                 UserId = user.Id,
@@ -118,7 +118,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return RedirectToPage();
         }
 
-        // AJAX GET: детали для модального редактирования
+        // AJAX GET: РґРµС‚Р°Р»Рё РґР»СЏ РјРѕРґР°Р»СЊРЅРѕРіРѕ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
         public async Task<JsonResult> OnGetEmployeeDetailsAsync(string userId)
         {
             if (string.IsNullOrEmpty(userId))
@@ -147,17 +147,17 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return new JsonResult(result);
         }
 
-        // POST: редактирование существующего сотрудника
+        // POST: СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРіРѕ СЃРѕС‚СЂСѓРґРЅРёРєР°
         public async Task<IActionResult> OnPostEditAsync()
         {
-            // валидация: при редактировании Password игнорируем, UserId обязателен
+            // РІР°Р»РёРґР°С†РёСЏ: РїСЂРё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРё Password РёРіРЅРѕСЂРёСЂСѓРµРј, UserId РѕР±СЏР·Р°С‚РµР»РµРЅ
             ModelState.Remove(nameof(Input.Password));
             if (string.IsNullOrEmpty(Input.UserId))
             {
-                ModelState.AddModelError(nameof(Input.UserId), "UserId обязателен.");
+                ModelState.AddModelError(nameof(Input.UserId), "UserId РѕР±СЏР·Р°С‚РµР»РµРЅ.");
             }
 
-            await OnGetAsync(); // чтобы таблица была доступна при ошибке
+            await OnGetAsync(); // С‡С‚РѕР±С‹ С‚Р°Р±Р»РёС†Р° Р±С‹Р»Р° РґРѕСЃС‚СѓРїРЅР° РїСЂРё РѕС€РёР±РєРµ
 
             if (!ModelState.IsValid)
                 return Page();
@@ -165,7 +165,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             var user = await _userMgr.FindByIdAsync(Input.UserId!);
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Пользователь не найден.");
+                ModelState.AddModelError(string.Empty, "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ.");
                 return Page();
             }
 
@@ -173,11 +173,11 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                                    .FirstOrDefaultAsync(p => p.UserId == Input.UserId);
             if (profile == null)
             {
-                ModelState.AddModelError(string.Empty, "Профиль сотрудника не найден.");
+                ModelState.AddModelError(string.Empty, "РџСЂРѕС„РёР»СЊ СЃРѕС‚СЂСѓРґРЅРёРєР° РЅРµ РЅР°Р№РґРµРЅ.");
                 return Page();
             }
 
-            // Обновляем e-mail / UserName
+            // РћР±РЅРѕРІР»СЏРµРј e-mail / UserName
             user.Email = Input.Email;
             user.UserName = Input.Email;
             var updateResult = await _userMgr.UpdateAsync(user);
@@ -188,7 +188,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            // Обновляем роль, если изменилась
+            // РћР±РЅРѕРІР»СЏРµРј СЂРѕР»СЊ, РµСЃР»Рё РёР·РјРµРЅРёР»Р°СЃСЊ
             var currentRoles = await _userMgr.GetRolesAsync(user);
             if (!currentRoles.Contains(Input.Role))
             {
@@ -196,7 +196,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 await _userMgr.AddToRoleAsync(user, Input.Role);
             }
 
-            // Обновляем профиль
+            // РћР±РЅРѕРІР»СЏРµРј РїСЂРѕС„РёР»СЊ
             profile.TabNumber = Input.TabNumber;
             profile.Position = Input.Position;
             _db.EmployeeProfiles.Update(profile);
@@ -205,7 +205,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return RedirectToPage();
         }
 
-        // POST: удалить сотрудника
+        // POST: СѓРґР°Р»РёС‚СЊ СЃРѕС‚СЂСѓРґРЅРёРєР°
         public async Task<IActionResult> OnPostDeleteAsync(string userId)
         {
             if (string.IsNullOrEmpty(userId))
@@ -234,10 +234,10 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return RedirectToPage();
         }
 
-        // Единая модель для создания/редактирования
+        // Р•РґРёРЅР°СЏ РјРѕРґРµР»СЊ РґР»СЏ СЃРѕР·РґР°РЅРёСЏ/СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
         public class InputModel
         {
-            // При создании остаётся null, при редактировании заполняется из JS
+            // РџСЂРё СЃРѕР·РґР°РЅРёРё РѕСЃС‚Р°С‘С‚СЃСЏ null, РїСЂРё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРё Р·Р°РїРѕР»РЅСЏРµС‚СЃСЏ РёР· JS
             public string? UserId { get; set; }
 
             [Required, EmailAddress]
@@ -245,18 +245,18 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             public string Email { get; set; } = string.Empty;
 
             [DataType(DataType.Password)]
-            [Display(Name = "Пароль")]
-            public string? Password { get; set; } // нужен только при создании
+            [Display(Name = "РџР°СЂРѕР»СЊ")]
+            public string? Password { get; set; } // РЅСѓР¶РµРЅ С‚РѕР»СЊРєРѕ РїСЂРё СЃРѕР·РґР°РЅРёРё
 
             [Required]
-            [Display(Name = "Роль")]
+            [Display(Name = "Р РѕР»СЊ")]
             public string Role { get; set; } = string.Empty;
 
-            [Required(ErrorMessage = "Табельный номер обязателен")]
-            [Display(Name = "Табельный номер")]
+            [Required(ErrorMessage = "РўР°Р±РµР»СЊРЅС‹Р№ РЅРѕРјРµСЂ РѕР±СЏР·Р°С‚РµР»РµРЅ")]
+            [Display(Name = "РўР°Р±РµР»СЊРЅС‹Р№ РЅРѕРјРµСЂ")]
             public string TabNumber { get; set; } = string.Empty;
 
-            [Display(Name = "Должность")]
+            [Display(Name = "Р”РѕР»Р¶РЅРѕСЃС‚СЊ")]
             public string? Position { get; set; }
         }
     }

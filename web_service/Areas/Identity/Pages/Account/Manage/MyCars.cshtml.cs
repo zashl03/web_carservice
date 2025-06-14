@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -15,7 +15,7 @@ using web_service.Data.Identity;
 namespace web_service.Areas.Identity.Pages.Account.Manage
 {
     [Area("Identity")]
-    [Authorize] // Доступна любому аутентифицированному клиенту и администратору
+    [Authorize] // Р”РѕСЃС‚СѓРїРЅР° Р»СЋР±РѕРјСѓ Р°СѓС‚РµРЅС‚РёС„РёС†РёСЂРѕРІР°РЅРЅРѕРјСѓ РєР»РёРµРЅС‚Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂСѓ
     public class MyCarsModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -27,62 +27,62 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             _userManager = userManager;
         }
 
-        // Список машин для отображения
+        // РЎРїРёСЃРѕРє РјР°С€РёРЅ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ
         public IList<CarEntity> MyCars { get; set; } = new List<CarEntity>();
 
-        // Модель для формы создания/редактирования
+        // РњРѕРґРµР»СЊ РґР»СЏ С„РѕСЂРјС‹ СЃРѕР·РґР°РЅРёСЏ/СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
         [BindProperty]
         public CarInputModel Input { get; set; }
 
-        // Если админ просматривает чужие автомобили, сюда придёт userId клиента
+        // Р•СЃР»Рё Р°РґРјРёРЅ РїСЂРѕСЃРјР°С‚СЂРёРІР°РµС‚ С‡СѓР¶РёРµ Р°РІС‚РѕРјРѕР±РёР»Рё, СЃСЋРґР° РїСЂРёРґС‘С‚ userId РєР»РёРµРЅС‚Р°
         [BindProperty(SupportsGet = true)]
         public string? ClientId { get; set; }
 
         public class CarInputModel
         {
-            public Guid? Id { get; set; } // null или Guid.Empty => новая машина
+            public Guid? Id { get; set; } // null РёР»Рё Guid.Empty => РЅРѕРІР°СЏ РјР°С€РёРЅР°
 
             [Required]
-            [StringLength(17, MinimumLength = 17, ErrorMessage = "VIN должен состоять ровно из 17 символов.")]
-            [RegularExpression(@"[A-HJ-NPR-Z0-9]{17}", ErrorMessage = "VIN может содержать только буквы (кроме I, O, Q) и цифры.")]
+            [StringLength(17, MinimumLength = 17, ErrorMessage = "VIN РґРѕР»Р¶РµРЅ СЃРѕСЃС‚РѕСЏС‚СЊ СЂРѕРІРЅРѕ РёР· 17 СЃРёРјРІРѕР»РѕРІ.")]
+            [RegularExpression(@"[A-HJ-NPR-Z0-9]{17}", ErrorMessage = "VIN РјРѕР¶РµС‚ СЃРѕРґРµСЂР¶Р°С‚СЊ С‚РѕР»СЊРєРѕ Р±СѓРєРІС‹ (РєСЂРѕРјРµ I, O, Q) Рё С†РёС„СЂС‹.")]
             [Display(Name = "VIN")]
             public string VIN { get; set; }
 
             [Required]
-            [StringLength(9, MinimumLength = 7, ErrorMessage = "Номерной знак должен быть длиной от 7 до 9 символов.")]
-            [Display(Name = "Номерной знак")]
+            [StringLength(9, MinimumLength = 7, ErrorMessage = "РќРѕРјРµСЂРЅРѕР№ Р·РЅР°Рє РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РґР»РёРЅРѕР№ РѕС‚ 7 РґРѕ 9 СЃРёРјРІРѕР»РѕРІ.")]
+            [Display(Name = "РќРѕРјРµСЂРЅРѕР№ Р·РЅР°Рє")]
             public string LicencePlate { get; set; }
 
             [Required, MaxLength(50)]
-            [Display(Name = "Марка")]
+            [Display(Name = "РњР°СЂРєР°")]
             public string Brand { get; set; }
 
             [Required, MaxLength(50)]
-            [Display(Name = "Модель")]
+            [Display(Name = "РњРѕРґРµР»СЊ")]
             public string Model { get; set; }
 
             [Required, MaxLength(50)]
-            [Display(Name = "Пробег")]
+            [Display(Name = "РџСЂРѕР±РµРі")]
             public string Mileage { get; set; }
 
             [Required]
-            [Range(1900, 2100, ErrorMessage = "Год должен быть в диапазоне 1900–2100.")]
-            [Display(Name = "Год выпуска")]
+            [Range(1900, 2100, ErrorMessage = "Р“РѕРґ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РІ РґРёР°РїР°Р·РѕРЅРµ 1900вЂ“2100.")]
+            [Display(Name = "Р“РѕРґ РІС‹РїСѓСЃРєР°")]
             public int Year { get; set; }
 
             [Required, MaxLength(50)]
-            [Display(Name = "Цвет")]
+            [Display(Name = "Р¦РІРµС‚")]
             public string Color { get; set; }
         }
 
-        // GET: загрузка страницы
+        // GET: Р·Р°РіСЂСѓР·РєР° СЃС‚СЂР°РЅРёС†С‹
         public async Task<IActionResult> OnGetAsync()
         {
             await PopulateMyCarsAsync();
             return Page();
         }
 
-        // POST: сохранить (создать или редактировать)
+        // POST: СЃРѕС…СЂР°РЅРёС‚СЊ (СЃРѕР·РґР°С‚СЊ РёР»Рё СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ)
         public async Task<IActionResult> OnPostSaveAsync()
         {
             if (!ModelState.IsValid)
@@ -91,7 +91,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            // Вычисляем userId, для которого выполняем операцию (админ может смотреть чужие)
+            // Р’С‹С‡РёСЃР»СЏРµРј userId, РґР»СЏ РєРѕС‚РѕСЂРѕРіРѕ РІС‹РїРѕР»РЅСЏРµРј РѕРїРµСЂР°С†РёСЋ (Р°РґРјРёРЅ РјРѕР¶РµС‚ СЃРјРѕС‚СЂРµС‚СЊ С‡СѓР¶РёРµ)
             string userIdToUse;
             if (User.IsInRole("Administrator") && !string.IsNullOrEmpty(ClientId))
             {
@@ -105,35 +105,35 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 userIdToUse = currentUser.Id;
             }
 
-            // Получаем профиль клиента по userIdToUse
+            // РџРѕР»СѓС‡Р°РµРј РїСЂРѕС„РёР»СЊ РєР»РёРµРЅС‚Р° РїРѕ userIdToUse
             var clientProfile = await _context.ClientProfiles
                 .FirstOrDefaultAsync(cp => cp.UserId == userIdToUse);
             if (clientProfile == null)
             {
-                ModelState.AddModelError("", "Профиль клиента не найден.");
+                ModelState.AddModelError("", "РџСЂРѕС„РёР»СЊ РєР»РёРµРЅС‚Р° РЅРµ РЅР°Р№РґРµРЅ.");
                 await PopulateMyCarsAsync();
                 return Page();
             }
 
-            // Сколько уже машин у этого клиента?
+            // РЎРєРѕР»СЊРєРѕ СѓР¶Рµ РјР°С€РёРЅ Сѓ СЌС‚РѕРіРѕ РєР»РёРµРЅС‚Р°?
             var existingCount = await _context.Cars
                 .CountAsync(c => c.ClientProfileId == clientProfile.UserId);
 
             if (Input.Id == null || Input.Id == Guid.Empty)
             {
-                // Создаём новую машину
+                // РЎРѕР·РґР°С‘Рј РЅРѕРІСѓСЋ РјР°С€РёРЅСѓ
                 if (existingCount >= 10)
                 {
-                    ModelState.AddModelError("", "Нельзя добавить более 10 автомобилей.");
+                    ModelState.AddModelError("", "РќРµР»СЊР·СЏ РґРѕР±Р°РІРёС‚СЊ Р±РѕР»РµРµ 10 Р°РІС‚РѕРјРѕР±РёР»РµР№.");
                     await PopulateMyCarsAsync();
                     return Page();
                 }
 
-                // Проверяем уникальность VIN и номерного знака среди всех машин
+                // РџСЂРѕРІРµСЂСЏРµРј СѓРЅРёРєР°Р»СЊРЅРѕСЃС‚СЊ VIN Рё РЅРѕРјРµСЂРЅРѕРіРѕ Р·РЅР°РєР° СЃСЂРµРґРё РІСЃРµС… РјР°С€РёРЅ
                 bool vinExists = await _context.Cars.AnyAsync(c => c.VIN == Input.VIN);
                 if (vinExists)
                 {
-                    ModelState.AddModelError("Input.VIN", "Автомобиль с таким VIN уже существует.");
+                    ModelState.AddModelError("Input.VIN", "РђРІС‚РѕРјРѕР±РёР»СЊ СЃ С‚Р°РєРёРј VIN СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚.");
                     await PopulateMyCarsAsync();
                     return Page();
                 }
@@ -141,7 +141,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 bool plateExists = await _context.Cars.AnyAsync(c => c.LicencePlate == Input.LicencePlate);
                 if (plateExists)
                 {
-                    ModelState.AddModelError("Input.LicencePlate", "Автомобиль с таким номерным знаком уже существует.");
+                    ModelState.AddModelError("Input.LicencePlate", "РђРІС‚РѕРјРѕР±РёР»СЊ СЃ С‚Р°РєРёРј РЅРѕРјРµСЂРЅС‹Рј Р·РЅР°РєРѕРј СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚.");
                     await PopulateMyCarsAsync();
                     return Page();
                 }
@@ -164,7 +164,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             }
             else
             {
-                // Редактируем существующую машину
+                // Р РµРґР°РєС‚РёСЂСѓРµРј СЃСѓС‰РµСЃС‚РІСѓСЋС‰СѓСЋ РјР°С€РёРЅСѓ
                 var existingCar = await _context.Cars
                     .FirstOrDefaultAsync(c =>
                         c.Id == Input.Id.Value &&
@@ -175,12 +175,12 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                     return NotFound();
                 }
 
-                // Проверяем, что VIN и номерной знак уникальны среди других машин
+                // РџСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ VIN Рё РЅРѕРјРµСЂРЅРѕР№ Р·РЅР°Рє СѓРЅРёРєР°Р»СЊРЅС‹ СЃСЂРµРґРё РґСЂСѓРіРёС… РјР°С€РёРЅ
                 bool vinExists = await _context.Cars
                     .AnyAsync(c => c.VIN == Input.VIN && c.Id != existingCar.Id);
                 if (vinExists)
                 {
-                    ModelState.AddModelError("Input.VIN", "Другой автомобиль с таким VIN уже существует.");
+                    ModelState.AddModelError("Input.VIN", "Р”СЂСѓРіРѕР№ Р°РІС‚РѕРјРѕР±РёР»СЊ СЃ С‚Р°РєРёРј VIN СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚.");
                     await PopulateMyCarsAsync();
                     return Page();
                 }
@@ -189,12 +189,12 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                     .AnyAsync(c => c.LicencePlate == Input.LicencePlate && c.Id != existingCar.Id);
                 if (plateExists)
                 {
-                    ModelState.AddModelError("Input.LicencePlate", "Другой автомобиль с таким номерным знаком уже существует.");
+                    ModelState.AddModelError("Input.LicencePlate", "Р”СЂСѓРіРѕР№ Р°РІС‚РѕРјРѕР±РёР»СЊ СЃ С‚Р°РєРёРј РЅРѕРјРµСЂРЅС‹Рј Р·РЅР°РєРѕРј СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚.");
                     await PopulateMyCarsAsync();
                     return Page();
                 }
 
-                // Обновляем поля
+                // РћР±РЅРѕРІР»СЏРµРј РїРѕР»СЏ
                 existingCar.VIN = Input.VIN;
                 existingCar.LicencePlate = Input.LicencePlate;
                 existingCar.Brand = Input.Brand;
@@ -207,7 +207,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 await _context.SaveChangesAsync();
             }
 
-            // После сохранения возвращаемся на эту же страницу, сохраняя ClientId в query
+            // РџРѕСЃР»Рµ СЃРѕС…СЂР°РЅРµРЅРёСЏ РІРѕР·РІСЂР°С‰Р°РµРјСЃСЏ РЅР° СЌС‚Сѓ Р¶Рµ СЃС‚СЂР°РЅРёС†Сѓ, СЃРѕС…СЂР°РЅСЏСЏ ClientId РІ query
             if (User.IsInRole("Administrator") && !string.IsNullOrEmpty(ClientId))
             {
                 return RedirectToPage(new { ClientId = ClientId });
@@ -218,10 +218,10 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             }
         }
 
-        // POST: удалить машину
+        // POST: СѓРґР°Р»РёС‚СЊ РјР°С€РёРЅСѓ
         public async Task<IActionResult> OnPostDeleteAsync(Guid id)
         {
-            // Вычисляем userId, для которого удаляем (админ может удалять чужие)
+            // Р’С‹С‡РёСЃР»СЏРµРј userId, РґР»СЏ РєРѕС‚РѕСЂРѕРіРѕ СѓРґР°Р»СЏРµРј (Р°РґРјРёРЅ РјРѕР¶РµС‚ СѓРґР°Р»СЏС‚СЊ С‡СѓР¶РёРµ)
             string userIdToUse;
             if (User.IsInRole("Administrator") && !string.IsNullOrEmpty(ClientId))
             {
@@ -235,13 +235,13 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 userIdToUse = currentUser.Id;
             }
 
-            // Получаем клиентский профиль
+            // РџРѕР»СѓС‡Р°РµРј РєР»РёРµРЅС‚СЃРєРёР№ РїСЂРѕС„РёР»СЊ
             var clientProfile = await _context.ClientProfiles
                 .FirstOrDefaultAsync(cp => cp.UserId == userIdToUse);
             if (clientProfile == null)
                 return Challenge();
 
-            // Находим машину, принадлежащую именно этому клиенту
+            // РќР°С…РѕРґРёРј РјР°С€РёРЅСѓ, РїСЂРёРЅР°РґР»РµР¶Р°С‰СѓСЋ РёРјРµРЅРЅРѕ СЌС‚РѕРјСѓ РєР»РёРµРЅС‚Сѓ
             var car = await _context.Cars
                 .FirstOrDefaultAsync(c => c.Id == id && c.ClientProfileId == clientProfile.UserId);
 
@@ -251,7 +251,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 await _context.SaveChangesAsync();
             }
 
-            // После удаления возвращаемся на эту же страницу, сохраняя ClientId
+            // РџРѕСЃР»Рµ СѓРґР°Р»РµРЅРёСЏ РІРѕР·РІСЂР°С‰Р°РµРјСЃСЏ РЅР° СЌС‚Сѓ Р¶Рµ СЃС‚СЂР°РЅРёС†Сѓ, СЃРѕС…СЂР°РЅСЏСЏ ClientId
             if (User.IsInRole("Administrator") && !string.IsNullOrEmpty(ClientId))
             {
                 return RedirectToPage(new { ClientId = ClientId });
@@ -262,7 +262,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             }
         }
 
-        // AJAX GET: получить данные одной машины
+        // AJAX GET: РїРѕР»СѓС‡РёС‚СЊ РґР°РЅРЅС‹Рµ РѕРґРЅРѕР№ РјР°С€РёРЅС‹
         public async Task<JsonResult> OnGetCarDetailsAsync(Guid id)
         {
             var car = await _context.Cars
@@ -286,7 +286,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return new JsonResult(car);
         }
 
-        // Вспомогательный метод: заполняет MyCars (админ или клиент)
+        // Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Р№ РјРµС‚РѕРґ: Р·Р°РїРѕР»РЅСЏРµС‚ MyCars (Р°РґРјРёРЅ РёР»Рё РєР»РёРµРЅС‚)
         private async Task PopulateMyCarsAsync()
         {
             string userIdToUse;

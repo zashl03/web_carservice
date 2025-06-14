@@ -166,6 +166,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                                               .Include(p => p.Part)
                                               .Include(p => p.StorageLocation)
                                               .OrderBy(p => p.Part.PartName)
+                                              .ThenBy(p => p.StorageLocation.NumberPlace)
                                               .ToListAsync();
         }
     }

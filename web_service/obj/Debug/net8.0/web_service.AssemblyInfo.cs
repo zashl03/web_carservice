@@ -16,7 +16,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("web_service")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7ca9efcca15ed1ec8fadc63b1fa0378a282f7193")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+95b8ac6cd95f67fa0017fa56972fffa5b113c9ee")]
 [assembly: System.Reflection.AssemblyProductAttribute("web_service")]
 [assembly: System.Reflection.AssemblyTitleAttribute("web_service")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

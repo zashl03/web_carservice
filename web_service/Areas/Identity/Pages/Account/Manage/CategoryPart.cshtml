@@ -10,6 +10,7 @@
 <div class="container">
     <h2>@ViewData["Title"]</h2>
 
+    @* Кнопка «Добавить корневую категорию» вызывает AJAX-открытие модалки с пустыми полями *@
     <button class="btn btn-primary mb-3"
             data-bs-toggle="modal"
             data-bs-target="#editModal"
@@ -17,37 +18,35 @@
         <i class="fas fa-plus"></i> Добавить корневую категорию
     </button>
 
-    <ul class="list-group">
-        @foreach (var cat in Model.Categories.Where(c => c.ParentId == null))
-        {
-            @Html.Partial("_CategoryItem", new CategoryItemViewModel { Category = cat, Level = 0 })
-        }
-    </ul>
+    @* Контейнер, куда будем подгружать дерево через partial @_CategoryTree.cshtml *@
+    <div id="category-tree-container">
+        @await Html.PartialAsync("_CategoryTree", Model.Categories.Where(c => c.ParentId == null))
+    </div>
 </div>
 
-<!-- Модальное окно -->
+<!-- Модальное окно редактирования/добавления -->
 <div class="modal fade" id="editModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="post" asp-page="./CategoryPart" id="editForm">
+            <form id="editForm" method="post" asp-page="./CategoryPart">
                 @Html.AntiForgeryToken()
                 <div class="modal-header">
                     <h5 class="modal-title">Редактировать категорию</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" asp-for="Input.Id" />
-                    <input type="hidden" asp-for="Input.ParentId" id="ParentId" />
+                    <input type="hidden" asp-for="Input.Id" id="Input_Id" />
+                    <input type="hidden" asp-for="Input.ParentId" id="Input_ParentId" />
 
                     <div class="mb-3">
                         <label asp-for="Input.CategoryName" class="form-label"></label>
-                        <input asp-for="Input.CategoryName" class="form-control" />
+                        <input asp-for="Input.CategoryName" class="form-control" id="Input_CategoryName" />
                         <span asp-validation-for="Input.CategoryName" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Input.ShortName" class="form-label"></label>
-                        <input asp-for="Input.ShortName" class="form-control" />
+                        <input asp-for="Input.ShortName" class="form-control" id="Input_ShortName" />
                         <span asp-validation-for="Input.ShortName" class="text-danger"></span>
                     </div>
                 </div>
@@ -58,7 +57,8 @@
                         Отмена
                     </button>
                     <button type="submit"
-                            class="btn btn-primary">
+                            class="btn btn-primary"
+                            onclick="submitEditForm(event)">
                         Сохранить
                     </button>
                 </div>
@@ -66,24 +66,197 @@
         </div>
     </div>
 </div>
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content text-center">
+            <div class="modal-header justify-content-center">
+                <h5 class="modal-title">Подтвердите удаление</h5>
+            </div>
+            <div class="modal-body">
+                <p>Вы действительно хотите удалить эту категорию?</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно ошибки -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content text-center">
+            <div class="modal-header justify-content-center">
+                <h5 class="modal-title">Ошибка</h5>
+            </div>
+            <div class="modal-body">
+                <p id="errorModalText"></p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
     <script>
+        const storageKey = 'openCategoryIds';
+        let pendingDeleteId = null; // ID, который ждёт подтверждения удаления
+
+        // Навесить слушатели на все .collapse[id^="children-"]
+        function attachCollapseListeners() {
+            document.querySelectorAll('.collapse[id^="children-"]').forEach(function (collapseEl) {
+                collapseEl.addEventListener('shown.bs.collapse', function () {
+                    const catId = collapseEl.id.replace('children-', '');
+                    let openIds = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                    if (!openIds.includes(catId)) {
+                        openIds.push(catId);
+                        localStorage.setItem(storageKey, JSON.stringify(openIds));
+                    }
+                });
+                collapseEl.addEventListener('hidden.bs.collapse', function () {
+                    const catId = collapseEl.id.replace('children-', '');
+                    let openIds = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                    openIds = openIds.filter(id => id !== catId);
+                    localStorage.setItem(storageKey, JSON.stringify(openIds));
+                });
+            });
+        }
+
+        // Восстановить ранее открытые узлы
+        function restoreOpenedNodesFromLocalStorage() {
+            const openIds = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            openIds.forEach(function (catId) {
+                const el = document.getElementById('children-' + catId);
+                if (el) {
+                    el.classList.add('show');
+                }
+            });
+        }
+
+        // --------------------------------------------------------------------------------------------------
+        // 1) Отображает модальное окно подтверждения удаления, запоминая ID в pendingDeleteId
+        // --------------------------------------------------------------------------------------------------
+        function deleteCategoryAjax(catId) {
+            pendingDeleteId = catId;
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            deleteModal.show();
+        }
+
+        // --------------------------------------------------------------------------------------------------
+        // 2) При клике на кнопку «Удалить» в модальном окне подтверждения:
+        //    отправляем AJAX-запрос. В случае успеха – обновляем дерево. В случае ошибки – показываем errorModal.
+        // --------------------------------------------------------------------------------------------------
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+            if (!pendingDeleteId) return;
+
+            // Берём Anti-Forgery Token
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            const formData = new FormData();
+            formData.append('id', pendingDeleteId);
+            formData.append('__RequestVerificationToken', token);
+
+            fetch(window.location.pathname + '?handler=Delete', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        // ошибка – получаем текст и показываем в errorModal
+                        return response.text().then(errText => {
+                            const errorModalEl = document.getElementById('errorModal');
+                            document.getElementById('errorModalText').innerText = errText || "Произошла ошибка при удалении";
+                            new bootstrap.Modal(errorModalEl).show();
+                            return null;
+                        });
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    if (html) {
+                        // Удалось – вставляем новый фрагмент дерева
+                        document.getElementById('category-tree-container').innerHTML = html;
+                        attachCollapseListeners();
+                        restoreOpenedNodesFromLocalStorage();
+                    }
+                    // Прячем confirm-модалку (если она ещё открыта)
+                    const deleteModalEl = document.getElementById('deleteConfirmModal');
+                    bootstrap.Modal.getInstance(deleteModalEl)?.hide();
+                    pendingDeleteId = null;
+                })
+                .catch(err => {
+                    console.error(err);
+                    const errorModalEl = document.getElementById('errorModal');
+                    document.getElementById('errorModalText').innerText = "Ошибка сети или сервера при удалении";
+                    new bootstrap.Modal(errorModalEl).show();
+                });
+        });
+
+        // --------------------------------------------------------------------------------------------------
+        // 3) prepareModal (Add/Edit) и submitEditForm (незыменённый), а также начальное навешивание слушателей:
+        // --------------------------------------------------------------------------------------------------
         function prepareModal(id, parentId) {
-            var form = $('#editForm')[0];
+            const form = document.getElementById('editForm');
             form.reset();
 
-            // GUID.Empty для корректного биндинга
-            var emptyGuid = '00000000-0000-0000-0000-000000000000';
-            $('#Input_Id').val(id || emptyGuid);
-            $('#ParentId').val(parentId || '');
+            document.getElementById('Input_Id').value = id || '00000000-0000-0000-0000-000000000000';
+            document.getElementById('Input_ParentId').value = parentId || '';
 
-            // Переустановим заголовок
-            var title = id
+            const title = id
                 ? 'Редактировать категорию'
                 : (parentId ? 'Добавить подкатегорию' : 'Добавить корневую категорию');
-            $('#editModal .modal-title').text(title);
+            document.querySelector('#editModal .modal-title').innerText = title;
+
+            if (id) {
+                const nameElem = document.querySelector(`[data-cat-id='${id}'] .cat-name`);
+                document.getElementById('Input_CategoryName').value = nameElem?.innerText || '';
+
+                const shortElem = document.querySelector(`[data-cat-id='${id}'] .cat-short`);
+                if (shortElem && shortElem.innerText) {
+                    let txt = shortElem.innerText.trim();
+                    if (txt.startsWith('(') && txt.endsWith(')')) {
+                        txt = txt.slice(1, -1);
+                    }
+                    document.getElementById('Input_ShortName').value = txt;
+                } else {
+                    document.getElementById('Input_ShortName').value = '';
+                }
+            }
         }
+
+        function submitEditForm(event) {
+            event.preventDefault();
+            const form = document.getElementById('editForm');
+            const formData = new FormData(form);
+
+            fetch(window.location.pathname + '?handler=OnPost', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            })
+                .then(resp => resp.text())
+                .then(html => {
+                    const modalEl = document.getElementById('editModal');
+                    bootstrap.Modal.getInstance(modalEl).hide();
+                    document.getElementById('category-tree-container').innerHTML = html;
+                    attachCollapseListeners();
+                    restoreOpenedNodesFromLocalStorage();
+                })
+                .catch(err => console.error(err));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            attachCollapseListeners();
+            restoreOpenedNodesFromLocalStorage();
+        });
     </script>
 }
+
+

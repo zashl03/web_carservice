@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -33,7 +33,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             _logger = logger;
         }
 
-        // ========== Модель для создания нового клиента ==========
+        // ========== РњРѕРґРµР»СЊ РґР»СЏ СЃРѕР·РґР°РЅРёСЏ РЅРѕРІРѕРіРѕ РєР»РёРµРЅС‚Р° ==========
         public class CreateClientInputModel
         {
             [Required]
@@ -41,24 +41,24 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             public string Email { get; set; } = string.Empty;
 
             [Required]
-            [Display(Name = "Номер телефона")]
+            [Display(Name = "РќРѕРјРµСЂ С‚РµР»РµС„РѕРЅР°")]
             [Phone]
             public string PhoneNumber { get; set; } = string.Empty;
 
             [Required]
-            [Display(Name = "Полное имя")]
+            [Display(Name = "РџРѕР»РЅРѕРµ РёРјСЏ")]
             public string FullName { get; set; } = string.Empty;
 
             [Required]
             [DataType(DataType.Password)]
-            [Display(Name = "Пароль")]
+            [Display(Name = "РџР°СЂРѕР»СЊ")]
             public string Password { get; set; } = string.Empty;
         }
 
         [BindProperty]
         public CreateClientInputModel CreateInput { get; set; }
 
-        // ========== Модель для редактирования клиента ==========
+        // ========== РњРѕРґРµР»СЊ РґР»СЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ РєР»РёРµРЅС‚Р° ==========
         public class EditClientInputModel
         {
             [Required]
@@ -69,22 +69,22 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             public string Email { get; set; } = string.Empty;
 
             [Required]
-            [Display(Name = "Номер телефона")]
+            [Display(Name = "РќРѕРјРµСЂ С‚РµР»РµС„РѕРЅР°")]
             [Phone]
             public string PhoneNumber { get; set; } = string.Empty;
 
             [Required]
-            [Display(Name = "Полное имя")]
+            [Display(Name = "РџРѕР»РЅРѕРµ РёРјСЏ")]
             public string FullName { get; set; } = string.Empty;
         }
 
         [BindProperty]
         public EditClientInputModel EditInput { get; set; }
 
-        // ========== Список клиентов для таблицы ==========
+        // ========== РЎРїРёСЃРѕРє РєР»РёРµРЅС‚РѕРІ РґР»СЏ С‚Р°Р±Р»РёС†С‹ ==========
         public IList<ClientViewModel> ClientsList { get; set; } = new List<ClientViewModel>();
 
-        // ViewModel для отображения строки в таблице
+        // ViewModel РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ СЃС‚СЂРѕРєРё РІ С‚Р°Р±Р»РёС†Рµ
         public class ClientViewModel
         {
             public string Id { get; set; } = string.Empty;
@@ -94,14 +94,14 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             public DateTime DateCreated { get; set; }
         }
 
-        // ===== GET: загрузка страницы + фильтрация по поиску =====
-        // Параметр "search" – строка для поиска (по email / FullName / PhoneNumber)
+        // ===== GET: Р·Р°РіСЂСѓР·РєР° СЃС‚СЂР°РЅРёС†С‹ + С„РёР»СЊС‚СЂР°С†РёСЏ РїРѕ РїРѕРёСЃРєСѓ =====
+        // РџР°СЂР°РјРµС‚СЂ "search" вЂ“ СЃС‚СЂРѕРєР° РґР»СЏ РїРѕРёСЃРєР° (РїРѕ email / FullName / PhoneNumber)
         [BindProperty(SupportsGet = true)]
         public string? Search { get; set; }
 
         public async Task<IActionResult> OnGetAsync()
         {
-            // Загружаем всех пользователей, у которых есть ClientProfile
+            // Р—Р°РіСЂСѓР¶Р°РµРј РІСЃРµС… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№, Сѓ РєРѕС‚РѕСЂС‹С… РµСЃС‚СЊ ClientProfile
             var query = _context.Users
                 .Include(u => u.ClientProfile)
                 .Where(u => u.ClientProfile != null)
@@ -133,7 +133,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return Page();
         }
 
-        // ===== POST: Создать нового клиента =====
+        // ===== POST: РЎРѕР·РґР°С‚СЊ РЅРѕРІРѕРіРѕ РєР»РёРµРЅС‚Р° =====
         public async Task<IActionResult> OnPostCreateAsync()
         {
             const string PFX = nameof(CreateInput);
@@ -150,16 +150,16 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            // Проверяем, нет ли уже пользователя с таким Email
+            // РџСЂРѕРІРµСЂСЏРµРј, РЅРµС‚ Р»Рё СѓР¶Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ СЃ С‚Р°РєРёРј Email
             var existing = await _userManager.FindByEmailAsync(CreateInput.Email);
             if (existing != null)
             {
-                ModelState.AddModelError("CreateInput.Email", "Пользователь с таким email уже существует");
+                ModelState.AddModelError("CreateInput.Email", "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СЃ С‚Р°РєРёРј email СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚");
                 await OnGetAsync();
                 return Page();
             }
 
-            // Создаём нового ApplicationUser
+            // РЎРѕР·РґР°С‘Рј РЅРѕРІРѕРіРѕ ApplicationUser
             var user = new ApplicationUser
             {
                 UserName = CreateInput.Email,
@@ -179,13 +179,13 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            // Назначаем роль "Client" (предполагается, что такая роль уже есть)
+            // РќР°Р·РЅР°С‡Р°РµРј СЂРѕР»СЊ "Client" (РїСЂРµРґРїРѕР»Р°РіР°РµС‚СЃСЏ, С‡С‚Рѕ С‚Р°РєР°СЏ СЂРѕР»СЊ СѓР¶Рµ РµСЃС‚СЊ)
             await _userManager.AddToRoleAsync(user, "Client");
 
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             await _userManager.ConfirmEmailAsync(user, token);
 
-            // Создаём ClientProfile
+            // РЎРѕР·РґР°С‘Рј ClientProfile
             var profile = new ClientProfile
             {
                 UserId = user.Id,
@@ -194,14 +194,14 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             _context.ClientProfiles.Add(profile);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Добавлен новый клиент {UserId}", user.Id);
+            _logger.LogInformation("Р”РѕР±Р°РІР»РµРЅ РЅРѕРІС‹Р№ РєР»РёРµРЅС‚ {UserId}", user.Id);
             return RedirectToPage();
         }
 
-        // ===== GET (AJAX): получить список машин для клиента =====
+        // ===== GET (AJAX): РїРѕР»СѓС‡РёС‚СЊ СЃРїРёСЃРѕРє РјР°С€РёРЅ РґР»СЏ РєР»РёРµРЅС‚Р° =====
         public async Task<JsonResult> OnGetClientCarsAsync(string id)
         {
-            // id – это UserId (строка)
+            // id вЂ“ СЌС‚Рѕ UserId (СЃС‚СЂРѕРєР°)
             var cars = await _context.Cars
                 .Where(c => c.ClientProfileId == id)
                 .Select(c => new
@@ -219,26 +219,26 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return new JsonResult(cars);
         }
 
-        // ===== POST (AJAX): Удалить клиента =====
+        // ===== POST (AJAX): РЈРґР°Р»РёС‚СЊ РєР»РёРµРЅС‚Р° =====
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {
-            // id – UserId
+            // id вЂ“ UserId
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
-            // Удаляем сначала автомобили клиента
+            // РЈРґР°Р»СЏРµРј СЃРЅР°С‡Р°Р»Р° Р°РІС‚РѕРјРѕР±РёР»Рё РєР»РёРµРЅС‚Р°
             var cars = _context.Cars.Where(c => c.ClientProfileId == id);
             _context.Cars.RemoveRange(cars);
 
-            // Далее удаляем сам профиль
+            // Р”Р°Р»РµРµ СѓРґР°Р»СЏРµРј СЃР°Рј РїСЂРѕС„РёР»СЊ
             var profile = await _context.ClientProfiles.FindAsync(id);
             if (profile != null) _context.ClientProfiles.Remove(profile);
 
-            // И в конце удаляем ApplicationUser
+            // Р РІ РєРѕРЅС†Рµ СѓРґР°Р»СЏРµРј ApplicationUser
             var delResult = await _userManager.DeleteAsync(user);
             if (!delResult.Succeeded)
             {
-                // Вернём список ошибок, если нужно
+                // Р’РµСЂРЅС‘Рј СЃРїРёСЃРѕРє РѕС€РёР±РѕРє, РµСЃР»Рё РЅСѓР¶РЅРѕ
                 return BadRequest(delResult.Errors);
             }
 
@@ -246,7 +246,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return new JsonResult(new { success = true });
         }
 
-        // ===== POST (AJAX): Редактировать клиента =====
+        // ===== POST (AJAX): Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ РєР»РёРµРЅС‚Р° =====
         public async Task<IActionResult> OnPostEditAsync()
         {
             const string PFX = nameof(EditInput);
@@ -266,14 +266,14 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             var user = await _userManager.FindByIdAsync(EditInput.Id);
             if (user == null) return NotFound();
 
-            // Проверяем, не совпадает ли Email с другим пользователем
+            // РџСЂРѕРІРµСЂСЏРµРј, РЅРµ СЃРѕРІРїР°РґР°РµС‚ Р»Рё Email СЃ РґСЂСѓРіРёРј РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј
             var emailOwner = await _userManager.FindByEmailAsync(EditInput.Email);
             if (emailOwner != null && emailOwner.Id != EditInput.Id)
             {
-                return BadRequest(new[] { "Email уже занят другим пользователем" });
+                return BadRequest(new[] { "Email СѓР¶Рµ Р·Р°РЅСЏС‚ РґСЂСѓРіРёРј РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј" });
             }
 
-            // Обновляем поля
+            // РћР±РЅРѕРІР»СЏРµРј РїРѕР»СЏ
             user.Email = EditInput.Email;
             user.UserName = EditInput.Email;
             user.PhoneNumber = EditInput.PhoneNumber;

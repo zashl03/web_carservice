@@ -1,0 +1,45 @@
+﻿version: '3.8'
+
+services:
+  # 1) База данных
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: AutoServiceDb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12qwaszx
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=ru_RU.UTF-8"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # 2) Ваше .NET-приложение
+  webapp:
+    build: .
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    expose:
+      - "8080"    # только внутри сети docker
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 3) Nginx-прокси с HTTPS
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "80:80"    # HTTP
+      - "443:443"  # HTTPS
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs/server.crt:/etc/nginx/certs/server.crt:ro
+      - ./nginx/certs/server.key:/etc/nginx/certs/server.key:ro
+    depends_on:
+      - webapp
+
+volumes:
+  pgdata:

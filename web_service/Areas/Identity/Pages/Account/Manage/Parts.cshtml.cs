@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,15 +7,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using web_service.Data;              // подключите ваш namespace с ApplicationDbContext
-using web_service.Data.Entities;    // и сущности PartEntity и CategoryPartEntity
+using web_service.Data;              // РїРѕРґРєР»СЋС‡РёС‚Рµ РІР°С€ namespace СЃ ApplicationDbContext
+using web_service.Data.Entities;    // Рё СЃСѓС‰РЅРѕСЃС‚Рё PartEntity Рё CategoryPartEntity
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace web_service.Areas.Identity.Pages.Account.Manage
 {
     [Area("Identity")]
-    [Authorize(Roles = "Administrator,Storekeeper")] // Страница доступна только авторизованным пользователям
+    [Authorize(Roles = "Administrator,Storekeeper")] // РЎС‚СЂР°РЅРёС†Р° РґРѕСЃС‚СѓРїРЅР° С‚РѕР»СЊРєРѕ Р°РІС‚РѕСЂРёР·РѕРІР°РЅРЅС‹Рј РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРј
     public class PartsModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -25,63 +25,70 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             _context = context;
         }
 
-        // Список для отображения в таблице
+        // РЎРїРёСЃРѕРє РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ РІ С‚Р°Р±Р»РёС†Рµ
         public IList<PartEntity> PartsList { get; set; }
 
-        // Для формирования выпадающего списка категорий
+        // Р”Р»СЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёСЏ РІС‹РїР°РґР°СЋС‰РµРіРѕ СЃРїРёСЃРєР° РєР°С‚РµРіРѕСЂРёР№
         public SelectList CategorySelectList { get; set; }
 
-        // Модель, в которую привязана форма (создание/редактирование)
+        // РњРѕРґРµР»СЊ, РІ РєРѕС‚РѕСЂСѓСЋ РїСЂРёРІСЏР·Р°РЅР° С„РѕСЂРјР° (СЃРѕР·РґР°РЅРёРµ/СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ)
         [BindProperty]
         public PartInputModel Input { get; set; }
 
-        // Класс для полей формы
+        // РљР»Р°СЃСЃ РґР»СЏ РїРѕР»РµР№ С„РѕСЂРјС‹
         public class PartInputModel
         {
-            public Guid? Id { get; set; } // Если null или Guid.Empty => новая запись
+            public Guid? Id { get; set; } // Р•СЃР»Рё null РёР»Рё Guid.Empty => РЅРѕРІР°СЏ Р·Р°РїРёСЃСЊ
 
             [Required, MaxLength(50)]
+            [Display(Name = "РђСЂС‚РёРєСѓР» Р°РІС‚РѕСЃРµСЂРІРёСЃР°")]
             public string ServicePn { get; set; }
 
             [Required, MaxLength(50)]
+            [Display(Name = "РђСЂС‚РёРєСѓР» РїСЂРѕРёР·РІРѕРґРёС‚РµР»СЏ")]
             public string ManufacturerPn { get; set; }
 
             [Required, MaxLength(100)]
+            [Display(Name = "РџСЂРѕРёР·РІРѕРґРёС‚РµР»СЊ")]
             public string Manufacturer { get; set; }
 
             [Required, MaxLength(100)]
+            [Display(Name = "РќР°РёРјРµРЅРѕРІР°РЅРёРµ Р·Р°РїС‡Р°СЃС‚Рё")]
             public string PartName { get; set; }
 
+            [Display(Name = "РћРїРёСЃР°РЅРёРµ")]
             public string Description { get; set; }
 
             [Required]
             [Column(TypeName = "numeric(10,2)")]
-            [Range(0.01, double.MaxValue, ErrorMessage = "Цена должна быть больше 0")]
+            [Range(0.01, double.MaxValue, ErrorMessage = "Р¦РµРЅР° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ 0")]
+            [Display(Name = "Р¦РµРЅР°")]
             public decimal Price { get; set; }
 
             [Required, MaxLength(50)]
+            [Display(Name = "OEM РЅРѕРјРµСЂ Р·Р°РїС‡Р°СЃС‚Рё")]
             public string OEMNumber { get; set; }
 
             [Required]
             public Guid CategoryId { get; set; }
         }
 
-        // === Обработчик GET: инициализирует все нужные данные ===
+        // === РћР±СЂР°Р±РѕС‚С‡РёРє GET: РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚ РІСЃРµ РЅСѓР¶РЅС‹Рµ РґР°РЅРЅС‹Рµ ===
         public async Task<IActionResult> OnGetAsync()
         {
-            // Всегда заполняем и категории, и список запчастей
+            // Р’СЃРµРіРґР° Р·Р°РїРѕР»РЅСЏРµРј Рё РєР°С‚РµРіРѕСЂРёРё, Рё СЃРїРёСЃРѕРє Р·Р°РїС‡Р°СЃС‚РµР№
             await PopulateCategoriesAsync();
             await PopulatePartsListAsync();
             return Page();
         }
 
-        // === Обработчик POST для добавления/редактирования ===
+        // === РћР±СЂР°Р±РѕС‚С‡РёРє POST РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ/СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ ===
         public async Task<IActionResult> OnPostSaveAsync()
         {
-            // Проверяем, что модель валидна
+            // РџСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ РјРѕРґРµР»СЊ РІР°Р»РёРґРЅР°
             if (!ModelState.IsValid)
             {
-                // Если есть ошибки валидации, нужно снова заполнить списки перед возвратом Page()
+                // Р•СЃР»Рё РµСЃС‚СЊ РѕС€РёР±РєРё РІР°Р»РёРґР°С†РёРё, РЅСѓР¶РЅРѕ СЃРЅРѕРІР° Р·Р°РїРѕР»РЅРёС‚СЊ СЃРїРёСЃРєРё РїРµСЂРµРґ РІРѕР·РІСЂР°С‚РѕРј Page()
                 foreach (var e in ModelState.Values.SelectMany(v => v.Errors))
                     Console.WriteLine($"Validation error: {e.ErrorMessage}");
                 await PopulateCategoriesAsync();
@@ -89,7 +96,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            // Если Input.Id пустой или Guid.Empty => создаём новый объект
+            // Р•СЃР»Рё Input.Id РїСѓСЃС‚РѕР№ РёР»Рё Guid.Empty => СЃРѕР·РґР°С‘Рј РЅРѕРІС‹Р№ РѕР±СЉРµРєС‚
             if (Input.Id == null || Input.Id == Guid.Empty)
             {
                 var newPart = new PartEntity
@@ -110,7 +117,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             }
             else
             {
-                // Редактирование существующей
+                // Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµР№
                 var existing = await _context.Parts.FindAsync(Input.Id.Value);
                 if (existing == null)
                 {
@@ -130,11 +137,11 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                 await _context.SaveChangesAsync();
             }
 
-            // После успешного сохранения делаем редирект на GET, чтобы избежать повторной отправки формы
+            // РџРѕСЃР»Рµ СѓСЃРїРµС€РЅРѕРіРѕ СЃРѕС…СЂР°РЅРµРЅРёСЏ РґРµР»Р°РµРј СЂРµРґРёСЂРµРєС‚ РЅР° GET, С‡С‚РѕР±С‹ РёР·Р±РµР¶Р°С‚СЊ РїРѕРІС‚РѕСЂРЅРѕР№ РѕС‚РїСЂР°РІРєРё С„РѕСЂРјС‹
             return RedirectToPage();
         }
 
-        // === Обработчик POST для удаления ===
+        // === РћР±СЂР°Р±РѕС‚С‡РёРє POST РґР»СЏ СѓРґР°Р»РµРЅРёСЏ ===
         public async Task<IActionResult> OnPostDeleteAsync(Guid id)
         {
             var toDelete = await _context.Parts.FindAsync(id);
@@ -146,7 +153,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return RedirectToPage();
         }
 
-        // === AJAX-метод: возвращает JSON-данные конкретной запчасти для редактирования через JS ===
+        // === AJAX-РјРµС‚РѕРґ: РІРѕР·РІСЂР°С‰Р°РµС‚ JSON-РґР°РЅРЅС‹Рµ РєРѕРЅРєСЂРµС‚РЅРѕР№ Р·Р°РїС‡Р°СЃС‚Рё РґР»СЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ С‡РµСЂРµР· JS ===
         public async Task<JsonResult> OnGetPartDetailsAsync(Guid id)
         {
             Console.WriteLine($"[DEBUG] OnGetPartDetailsAsync called. id = {id}");
@@ -172,7 +179,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
             return new JsonResult(part);
         }
 
-        // === Вспомогательный метод: заполняет CategorySelectList ===
+        // === Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Р№ РјРµС‚РѕРґ: Р·Р°РїРѕР»РЅСЏРµС‚ CategorySelectList ===
         private async Task PopulateCategoriesAsync()
         {
             var categories = await _context.CategoryParts
@@ -183,7 +190,7 @@ namespace web_service.Areas.Identity.Pages.Account.Manage
                                                nameof(CategoryPartEntity.CategoryName));
         }
 
-        // === Вспомогательный метод: заполняет PartsList ===
+        // === Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Р№ РјРµС‚РѕРґ: Р·Р°РїРѕР»РЅСЏРµС‚ PartsList ===
         private async Task PopulatePartsListAsync()
         {
             PartsList = await _context.Parts
